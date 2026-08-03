@@ -316,23 +316,31 @@ function optimizeConstrained(cov, mu, rf, minW, maxW, objective, target, lambda)
   const n = mu.length;
   const isDefaultBounds = minW.every(m => m === 0) && maxW.every(m => m >= 0.999);
 
+  // Sanitize inputs: a zero-vol asset (e.g. CD) makes Σ singular.
+  // Clamp NaN μ to 0 and add a tiny diagonal jitter so Σ stays invertible.
+  const muSafe = mu.map(m => (isFinite(m) ? m : 0));
+  const covSafe = cov.map((row, i) => row.map((v, j) => {
+    const jitter = (i === j ? 1e-8 : 0);
+    return (isFinite(v) ? v : 0) + jitter;
+  }));
+
   // Candidates pool — start with analytical solutions
   const candidates = [];
 
   // Analytical solutions (may violate long-only constraint)
   try {
     if (objective === 'minVar' || objective === 'maxUtility') {
-      candidates.push(minVarianceUnconstrained(cov));
+      candidates.push(minVarianceUnconstrained(covSafe));
     }
     if (objective === 'maxSharpe' || objective === 'maxUtility') {
-      candidates.push(maxSharpeUnconstrained(cov, mu, rf));
+      candidates.push(maxSharpeUnconstrained(covSafe, muSafe, rf));
     }
     if (objective === 'targetReturn') {
-      candidates.push(targetReturnUnconstrained(cov, mu, target));
+      candidates.push(targetReturnUnconstrained(covSafe, muSafe, target));
     }
     // Always include min-var and max-Sharpe as starting points
-    candidates.push(minVarianceUnconstrained(cov));
-    candidates.push(maxSharpeUnconstrained(cov, mu, rf));
+    candidates.push(minVarianceUnconstrained(covSafe));
+    candidates.push(maxSharpeUnconstrained(covSafe, muSafe, rf));
   } catch (e) { /* singular matrix, skip */ }
 
   // Project analytical candidates to feasible set
@@ -342,15 +350,19 @@ function optimizeConstrained(cov, mu, rf, minW, maxW, objective, target, lambda)
   let bestW = null;
   let bestScore = -Infinity;
   for (const w of feasibleCandidates) {
-    const s = scoreObjective(w, cov, mu, rf, objective, target, lambda);
+    const s = scoreObjective(w, covSafe, muSafe, rf, objective, target, lambda);
     if (s > bestScore) { bestScore = s; bestW = [...w]; }
+  }
+  // Fallback: equal weights among free assets (never null)
+  if (!bestW) {
+    bestW = randomFeasibleWeights(minW, maxW, n);
   }
 
   // Phase 1: Massive Monte Carlo exploration
   const N_SAMPLES = 50000;
   for (let s = 0; s < N_SAMPLES; s++) {
     const w = randomFeasibleWeights(minW, maxW, n);
-    const score = scoreObjective(w, cov, mu, rf, objective, target, lambda);
+    const score = scoreObjective(w, covSafe, muSafe, rf, objective, target, lambda);
     if (score > bestScore) { bestScore = score; bestW = [...w]; }
   }
 
@@ -375,7 +387,7 @@ function optimizeConstrained(cov, mu, rf, minW, maxW, objective, target, lambda)
           if (delta <= 0) continue;
           wTry[i] += delta;
           wTry[j] -= delta;
-          const score = scoreObjective(wTry, cov, mu, rf, objective, target, lambda);
+          const score = scoreObjective(wTry, covSafe, muSafe, rf, objective, target, lambda);
           if (score > bestScore + 1e-10) {
             bestScore = score;
             bestW = wTry;
@@ -555,10 +567,10 @@ function goalsBasedAnalysis(pv, pmt, goalAmount, years, mu, cov, minW, maxW) {
  * @param currency Currency code
  */
 function portfolioDetail(w, mu, cov, yields, amount, years, rf) {
-  const annualReturn = portfolioReturn(w, mu);
-  const annualIncomeYield = Mat.dot(w, yields);
+  const annualReturn = isFinite(portfolioReturn(w, mu)) ? portfolioReturn(w, mu) : 0;
+  const annualIncomeYield = isFinite(Mat.dot(w, yields)) ? Mat.dot(w, yields) : 0;
   const capitalGrowthReturn = annualReturn - annualIncomeYield;
-  const stdDev = portfolioStdDev(w, cov);
+  const stdDev = isFinite(portfolioStdDev(w, cov)) ? portfolioStdDev(w, cov) : 0;
   const sharpe = stdDev > 1e-10 ? (annualReturn - rf) / stdDev : 0;
 
   // Future value
