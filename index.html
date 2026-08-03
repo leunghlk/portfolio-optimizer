@@ -461,7 +461,7 @@ let state = {
   ],
   weights: [], optimalWeights: [], method: 'maxSharpe', blViews: [],
 };
-const COLORS = ['#4f46e5','#059669','#d97706','#dc2626','#7c3aed','#0891b2','#db2777','#ca8a04'];
+const COLORS = ['#005b3f','#059669','#d97706','#c42b1c','#007a3d','#0891b2','#db2777','#ca8a04'];
 const CUR_SYM = {HKD:'HK$',USD:'$',CNY:'¥',EUR:'€',GBP:'£',SGD:'S$',JPY:'¥'};
 function curSym() { return CUR_SYM[document.getElementById('currency').value] || '$'; }
 function getAmount() { return parseFloat(document.getElementById('amount').value.replace(/,/g,'')) || 0; }
@@ -758,7 +758,7 @@ function drawFrontier(cov, mu, rf, minW, maxW, currentW, currentRet, currentSd) 
     frontier.push({ret:target, sd:minSd});
   }
   // Draw frontier line
-  ctx.strokeStyle = '#4f46e5'; ctx.lineWidth = 2.5; ctx.beginPath();
+  ctx.strokeStyle = '#005b3f'; ctx.lineWidth = 2.5; ctx.beginPath();
   frontier.forEach((p,i) => { const x=xS(p.sd), y=yS(p.ret); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
   ctx.stroke();
   // CAL
