@@ -7,124 +7,85 @@
   <script src="optimizer.js"></script>
   <style>
     :root {
-      --bg: #f5f6fa;
-      --panel: #ffffff;
-      --panel-2: #f0f2f5;
-      --border: #e2e5ed;
-      --text: #1a1d28;
-      --text-dim: #6b7280;
-      --accent: #4f46e5;
-      --accent-light: #eef2ff;
-      --accent-2: #7c3aed;
-      --green: #059669;
-      --green-light: #ecfdf5;
-      --red: #dc2626;
-      --red-light: #fef2f2;
-      --orange: #d97706;
-      --yellow: #ca8a04;
-      --radius: 10px;
-      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
-      --shadow-lg: 0 4px 12px rgba(0,0,0,0.08);
+      --bg: #f5f6fa; --panel: #ffffff; --panel-2: #f0f2f5; --border: #e2e5ed;
+      --text: #1a1d28; --text-dim: #6b7280;
+      --accent: #4f46e5; --accent-light: #eef2ff; --accent-2: #7c3aed;
+      --green: #059669; --green-light: #ecfdf5; --red: #dc2626; --red-light: #fef2f2;
+      --orange: #d97706; --yellow: #ca8a04;
+      --radius: 10px; --shadow: 0 1px 3px rgba(0,0,0,0.08); --shadow-lg: 0 4px 12px rgba(0,0,0,0.08);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-      background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5;
-    }
-    .header {
-      background: var(--panel);
-      border-bottom: 1px solid var(--border);
-      box-shadow: var(--shadow);
-      padding: 14px 24px;
-      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
-      position: sticky; top: 0; z-index: 100;
-    }
-    .header h1 {
-      font-size: 19px; font-weight: 700; color: var(--text);
-    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+    .header { background: var(--panel); border-bottom: 1px solid var(--border); box-shadow: var(--shadow); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; position: sticky; top: 0; z-index: 100; }
+    .header h1 { font-size: 19px; font-weight: 700; }
     .header h1 .icon { color: var(--accent); }
     .header .subtitle { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
     .header-right { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-    .lang-toggle {
-      display: flex; background: var(--panel-2); border-radius: 8px; padding: 2px; gap: 2px;
-    }
-    .lang-btn {
-      padding: 5px 12px; border: none; background: transparent; border-radius: 6px;
-      font-size: 12px; font-weight: 600; cursor: pointer; color: var(--text-dim); transition: all 0.15s;
-    }
+    .lang-toggle { display: flex; background: var(--panel-2); border-radius: 8px; padding: 2px; gap: 2px; }
+    .lang-btn { padding: 5px 12px; border: none; background: transparent; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--text-dim); transition: all 0.15s; }
     .lang-btn.active { background: var(--panel); color: var(--accent); box-shadow: var(--shadow); }
-    .currency-select {
-      background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px;
-      color: var(--text); padding: 6px 12px; font-size: 13px; cursor: pointer;
-    }
-    .currency-select:focus { border-color: var(--accent); outline: none; }
-    .btn {
-      background: var(--accent); color: #fff; border: none; padding: 8px 18px;
-      border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: var(--shadow); transition: all 0.15s;
-    }
+    .currency-select { background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 6px 12px; font-size: 13px; cursor: pointer; }
+    .btn { background: var(--accent); color: #fff; border: none; padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: var(--shadow); transition: all 0.15s; }
     .btn:hover { background: var(--accent-2); transform: translateY(-1px); }
     .btn-secondary { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); box-shadow: none; }
     .btn-secondary:hover { border-color: var(--accent); background: var(--accent-light); }
-    .main { display: grid; grid-template-columns: 400px 1fr; gap: 16px; padding: 16px; max-width: 1600px; margin: 0 auto; }
+    .main { display: grid; grid-template-columns: 420px 1fr; gap: 16px; padding: 16px; max-width: 1600px; margin: 0 auto; }
     .panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); }
-    .panel-title {
-      font-size: 13px; font-weight: 700; color: var(--text);
-      text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 14px;
-      display: flex; align-items: center; justify-content: space-between;
-    }
+    .panel-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
     .panel-title .badge { background: var(--accent-light); color: var(--accent); padding: 2px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; }
     .sidebar { display: flex; flex-direction: column; gap: 14px; }
     .input-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
-    .input-group label { font-size: 12px; color: var(--text-dim); font-weight: 500; }
-    .input-group input, .input-group select {
-      background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
-      color: var(--text); padding: 8px 12px; font-size: 13px; width: 100%;
-    }
+    .input-group label { font-size: 12px; color: var(--text-dim); font-weight: 500; display: flex; align-items: center; gap: 4px; }
+    .input-group input, .input-group select { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 8px 12px; font-size: 13px; width: 100%; }
     .input-group input:focus, .input-group select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-light); }
     .input-row { display: flex; gap: 8px; }
     .input-row .input-group { flex: 1; }
-    .asset-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    .asset-table th { text-align: left; padding: 6px 4px; color: var(--text-dim); font-weight: 600; font-size: 11px; border-bottom: 2px solid var(--border); }
-    .asset-table td { padding: 5px 4px; border-bottom: 1px solid var(--border); }
-    .asset-table input { background: var(--panel); border: 1px solid transparent; border-radius: 6px; color: var(--text); padding: 4px 6px; font-size: 12px; width: 100%; max-width: 72px; }
+    /* Tooltip */
+    .tip { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; border-radius: 50%; background: var(--accent-light); color: var(--accent); font-size: 10px; font-weight: 700; cursor: help; flex-shrink: 0; position: relative; }
+    .tip:hover .tip-text { visibility: visible; opacity: 1; }
+    .tip-text { visibility: hidden; opacity: 0; transition: opacity 0.2s; position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: #1a1d28; color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 11px; font-weight: 400; white-space: normal; width: 240px; text-align: left; z-index: 200; box-shadow: 0 4px 12px rgba(0,0,0,0.2); line-height: 1.5; }
+    .tip-text::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: #1a1d28; }
+    /* Asset table */
+    .asset-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: auto; }
+    .asset-table th { text-align: left; padding: 6px 3px; color: var(--text-dim); font-weight: 600; font-size: 10px; border-bottom: 2px solid var(--border); white-space: nowrap; }
+    .asset-table td { padding: 5px 3px; border-bottom: 1px solid var(--border); }
+    .asset-table input { background: var(--panel); border: 1px solid transparent; border-radius: 6px; color: var(--text); padding: 4px 5px; font-size: 12px; width: 100%; }
     .asset-table input:hover { border-color: var(--border); }
-    .asset-table input:focus { border-color: var(--accent); background: var(--panel); outline: none; }
-    .asset-table .name-cell input { max-width: 120px; font-weight: 500; }
-    .lock-btn { background: transparent; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-size: 13px; padding: 2px 7px; color: var(--text-dim); transition: all 0.15s; }
+    .asset-table input:focus { border-color: var(--accent); outline: none; }
+    .asset-table .col-name { min-width: 120px; }
+    .asset-table .col-name input { font-weight: 500; }
+    .asset-table .col-num { width: 58px; }
+    .asset-table .col-lock { width: 36px; text-align: center; }
+    .asset-table .col-w { width: 52px; }
+    .asset-table .col-rm { width: 28px; text-align: center; }
+    .lock-btn { background: transparent; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-size: 12px; padding: 2px 6px; color: var(--text-dim); transition: all 0.15s; }
     .lock-btn.locked { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
     .lock-btn:hover { border-color: var(--accent); }
-    .lock-weight-input { max-width: 60px !important; font-weight: 700; color: var(--accent) !important; }
-    .remove-btn { background: transparent; border: none; color: var(--red); cursor: pointer; font-size: 16px; padding: 2px 6px; opacity: 0.6; }
+    .lock-weight-input { font-weight: 700; color: var(--accent) !important; }
+    .remove-btn { background: transparent; border: none; color: var(--red); cursor: pointer; font-size: 16px; padding: 2px 4px; opacity: 0.5; }
     .remove-btn:hover { opacity: 1; }
     .add-asset-btn { background: var(--panel-2); border: 1px dashed var(--border); color: var(--text-dim); padding: 8px; border-radius: 8px; width: 100%; cursor: pointer; font-size: 12px; font-weight: 500; margin-top: 8px; transition: all 0.15s; }
     .add-asset-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
-    .corr-matrix { overflow-x: auto; }
-    .corr-matrix table { border-collapse: collapse; font-size: 11px; width: 100%; }
-    .corr-matrix td, .corr-matrix th { padding: 4px 6px; text-align: center; border: 1px solid var(--border); }
-    .corr-matrix input { width: 42px; background: var(--panel); border: 1px solid transparent; border-radius: 4px; color: var(--text); font-size: 11px; text-align: center; padding: 2px; }
-    .corr-matrix input:focus { border-color: var(--accent); outline: none; }
-    .corr-matrix .diag { background: var(--accent-light); font-weight: 700; color: var(--accent); }
-    .content { display: flex; flex-direction: column; gap: 16px; }
-    .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+    /* KPI */
+    .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); gap: 12px; }
     .kpi-card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow); transition: transform 0.15s; }
     .kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
-    .kpi-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 5px; font-weight: 600; }
+    .kpi-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 5px; font-weight: 600; display: flex; align-items: center; gap: 4px; }
     .kpi-value { font-size: 24px; font-weight: 800; }
-    .kpi-value.green { color: var(--green); }
-    .kpi-value.red { color: var(--red); }
-    .kpi-value.accent { color: var(--accent); }
+    .kpi-value.green { color: var(--green); } .kpi-value.red { color: var(--red); } .kpi-value.accent { color: var(--accent); }
     .kpi-sub { font-size: 11px; color: var(--text-dim); margin-top: 3px; }
-    .chart-container { position: relative; }
-    canvas { max-width: 100%; }
+    /* Sliders */
     .alloc-slider-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
     .alloc-slider-row:last-child { border-bottom: none; }
     .alloc-name { flex: 0 0 120px; font-size: 12px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .alloc-slider { flex: 1; -webkit-appearance: none; appearance: none; height: 8px; background: var(--panel-2); border-radius: 4px; cursor: pointer; outline: none; }
     .alloc-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; background: var(--accent); border-radius: 50%; cursor: pointer; border: 3px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
     .alloc-slider::-moz-range-thumb { width: 20px; height: 20px; background: var(--accent); border-radius: 50%; cursor: pointer; border: 3px solid #fff; }
+    .alloc-slider:disabled { opacity: 0.4; }
     .alloc-value { flex: 0 0 70px; text-align: right; font-size: 14px; font-weight: 700; color: var(--accent); }
     .alloc-value-pct { font-size: 10px; color: var(--text-dim); }
     .alloc-locked-badge { font-size: 9px; background: var(--accent-light); color: var(--accent); padding: 1px 5px; border-radius: 4px; font-weight: 700; margin-left: 4px; }
+    /* Table */
     .results-table { width: 100%; border-collapse: collapse; font-size: 12px; }
     .results-table th { text-align: right; padding: 8px 10px; color: var(--text-dim); font-weight: 600; font-size: 11px; border-bottom: 2px solid var(--border); white-space: nowrap; }
     .results-table th:first-child { text-align: left; }
@@ -132,37 +93,50 @@
     .results-table td:first-child { text-align: left; font-weight: 600; }
     .results-table tr.total-row { background: var(--accent-light); font-weight: 800; }
     .results-table tr.total-row td { border-top: 2px solid var(--accent); }
-    .pos { color: var(--green); }
-    .neg { color: var(--red); }
-    .frontier-container { position: relative; }
+    .pos { color: var(--green); } .neg { color: var(--red); }
+    /* Risk budget */
     .risk-budget-row { display: grid; grid-template-columns: 120px 1fr 60px 60px; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
     .risk-budget-row:last-child { border-bottom: none; }
-    .rb-bar-container { height: 24px; background: var(--panel-2); border-radius: 6px; overflow: hidden; position: relative; }
+    .rb-bar-container { height: 24px; background: var(--panel-2); border-radius: 6px; overflow: hidden; }
     .rb-bar { height: 100%; border-radius: 6px; transition: width 0.3s; opacity: 0.85; }
+    /* Tabs */
     .tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 18px; flex-wrap: wrap; }
     .tab { padding: 8px 18px; font-size: 13px; font-weight: 600; color: var(--text-dim); cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.15s; margin-bottom: -2px; }
     .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
     .tab:hover { color: var(--text); }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
+    .tab-content { display: none; } .tab-content.active { display: block; }
     .total-alloc-bar { height: 8px; background: var(--panel-2); border-radius: 4px; margin: 8px 0; overflow: hidden; }
     .total-alloc-fill { height: 100%; background: var(--accent); transition: width 0.3s; }
     .total-alloc-fill.over { background: var(--orange); }
     .total-alloc-fill.under { background: var(--red); }
     .total-alloc-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-dim); margin-bottom: 6px; font-weight: 500; }
+    /* Method */
     .method-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .method-card { background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; cursor: pointer; transition: all 0.15s; }
     .method-card.active { border-color: var(--accent); background: var(--accent-light); }
     .method-card:hover { border-color: var(--accent); }
     .method-card-title { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
     .method-card-desc { font-size: 10px; color: var(--text-dim); line-height: 1.4; }
+    /* Theory note */
     .theory-note { font-size: 12px; color: var(--text-dim); margin-top: 12px; padding: 12px 14px; background: var(--accent-light); border-radius: 8px; border-left: 4px solid var(--accent); line-height: 1.6; }
+    .info-box { font-size: 11px; color: var(--text-dim); padding: 10px 12px; background: var(--panel-2); border-radius: 8px; margin-top: 8px; line-height: 1.6; }
+    /* BL */
     .bl-view-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 6px; margin-bottom: 6px; align-items: center; }
     .bl-view-row input, .bl-view-row select { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; color: var(--text); padding: 5px 8px; font-size: 12px; }
     .bl-view-row input:focus, .bl-view-row select:focus { border-color: var(--accent); outline: none; }
     .success-msg { position: fixed; bottom: 20px; right: 20px; background: var(--green); color: white; padding: 10px 20px; border-radius: 8px; font-size: 13px; z-index: 1000; opacity: 0; transition: opacity 0.3s; box-shadow: var(--shadow-lg); }
     .success-msg.show { opacity: 1; }
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 500; display: none; align-items: center; justify-content: center; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: var(--panel); border-radius: 12px; padding: 28px; box-shadow: var(--shadow-lg); max-width: 420px; width: 90%; }
+    .modal h3 { font-size: 16px; margin-bottom: 16px; }
+    .modal input { width: 100%; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 14px; margin-bottom: 16px; }
+    .modal .btn-row { display: flex; gap: 8px; justify-content: flex-end; }
+    /* Amount input with comma formatting */
+    .amount-input { font-size: 16px !important; font-weight: 600; }
     @media (max-width: 1100px) { .main { grid-template-columns: 1fr; } }
+    @media print { .header, .sidebar, .tabs, .btn, .btn-secondary, .lang-toggle, .currency-select { display: none !important; } .main { grid-template-columns: 1fr; } .panel { box-shadow: none; border: none; page-break-inside: avoid; } }
   </style>
 </head>
 <body>
@@ -170,7 +144,7 @@
 <div class="header">
   <div>
     <h1><span class="icon">📊</span> <span data-i18n="title">Portfolio Optimization Dashboard</span></h1>
-    <div class="subtitle" data-i18n="subtitle">CFA Level I-III Framework · Mean-Variance Optimization · Black-Litterman · Risk Budgeting</div>
+    <div class="subtitle" data-i18n="subtitle">CFA Level I-III Framework · MVO · Black-Litterman · Risk Budgeting</div>
   </div>
   <div class="header-right">
     <div class="lang-toggle">
@@ -178,15 +152,10 @@
       <button class="lang-btn" id="langZH" onclick="setLang('zh')">繁中</button>
     </div>
     <select id="currency" class="currency-select" onchange="recalculate()">
-      <option value="HKD">HKD</option>
-      <option value="USD">USD</option>
-      <option value="CNY">CNY</option>
-      <option value="EUR">EUR</option>
-      <option value="GBP">GBP</option>
-      <option value="SGD">SGD</option>
-      <option value="JPY">JPY</option>
+      <option value="HKD">HKD</option><option value="USD">USD</option><option value="CNY">CNY</option>
+      <option value="EUR">EUR</option><option value="GBP">GBP</option><option value="SGD">SGD</option><option value="JPY">JPY</option>
     </select>
-    <button class="btn btn-secondary" onclick="exportData()" data-i18n="export">Export</button>
+    <button class="btn btn-secondary" onclick="openPdfModal()" data-i18n="exportPdf">Export PDF</button>
     <button class="btn" onclick="recalculate()" data-i18n="optimize">Optimize</button>
   </div>
 </div>
@@ -196,33 +165,33 @@
     <!-- Client Profile -->
     <div class="panel">
       <div class="panel-title" data-i18n="clientProfile">Client Profile</div>
-      <div class="input-row">
-        <div class="input-group">
-          <label data-i18n="amount">Investment Amount</label>
-          <input type="number" id="amount" value="1000000" onchange="recalculate()">
-        </div>
-        <div class="input-group">
-          <label data-i18n="tenor">Tenor (Years)</label>
-          <input type="number" id="tenor" value="5" min="1" onchange="recalculate()">
-        </div>
+      <div class="input-group">
+        <label data-i18n="amount">Investment Amount</label>
+        <input type="text" id="amount" class="amount-input" value="10,000,000" oninput="onAmountInput(this)" onchange="recalculate()">
       </div>
       <div class="input-row">
         <div class="input-group">
-          <label data-i18n="targetReturn">Target Annual Return (%)</label>
-          <input type="number" id="targetReturn" value="8" step="0.5" onchange="recalculate()">
+          <label data-i18n="tenor">Tenor (Years)</label>
+          <input type="number" id="tenor" value="5" min="1" onchange="recalculate()">
         </div>
         <div class="input-group">
           <label data-i18n="rfRate">Risk-Free Rate (%)</label>
           <input type="number" id="rfRate" value="4" step="0.25" onchange="recalculate()">
         </div>
       </div>
-      <div class="input-group">
-        <label data-i18n="riskTolerance">Risk Tolerance — λ (1 aggressive, 10 conservative)</label>
-        <input type="range" id="riskAversion" min="1" max="10" value="4" step="0.5" oninput="updateRiskLabel(); recalculate()">
-        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-dim);margin-top:2px;">
-          <span data-i18n="aggressive">Aggressive</span>
-          <span id="riskLabel" style="color:var(--accent);font-weight:700;">Moderate (λ=4)</span>
-          <span data-i18n="conservative">Conservative</span>
+      <div class="input-row">
+        <div class="input-group">
+          <label><span data-i18n="targetReturn">Target Annual Return (%)</span></label>
+          <input type="number" id="targetReturn" value="8" step="0.5" onchange="recalculate()">
+        </div>
+        <div class="input-group">
+          <label><span data-i18n="riskTolerance">Risk Tolerance λ</span></label>
+          <input type="range" id="riskAversion" min="1" max="10" value="4" step="0.5" oninput="updateRiskLabel(); recalculate()">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-dim);margin-top:2px;">
+            <span data-i18n="aggressive">Aggressive</span>
+            <span id="riskLabel" style="color:var(--accent);font-weight:700;">Moderate (λ=4)</span>
+            <span data-i18n="conservative">Conservative</span>
+          </div>
         </div>
       </div>
     </div>
@@ -232,28 +201,19 @@
       <div class="panel-title"><span data-i18n="assetClasses">Asset Classes</span> <span class="badge" id="assetCount">4</span></div>
       <table class="asset-table">
         <thead><tr>
-          <th data-i18n="name">Name</th>
-          <th>E(R)%</th>
-          <th>σ%</th>
-          <th data-i18n="yieldCol">Yield%</th>
-          <th data-i18n="lock">Fix</th>
-          <th>W%</th>
-          <th></th>
+          <th class="col-name" data-i18n="name">Name</th>
+          <th class="col-num">E(R)%</th>
+          <th class="col-num">σ%</th>
+          <th class="col-num" data-i18n="yieldCol">Yld%</th>
+          <th class="col-lock" data-i18n="lock">Fix</th>
+          <th class="col-w">W%</th>
+          <th class="col-rm"></th>
         </tr></thead>
         <tbody id="assetTableBody"></tbody>
       </table>
       <button class="add-asset-btn" onclick="addAsset()" data-i18n="addAsset">+ Add Asset Class</button>
-      <div class="theory-note" style="margin-top:10px;font-size:11px;" data-i18n="lockHint">
-        💡 Click 🔒 to fix an asset's weight. The optimizer will calculate optimal % for remaining (unlocked) assets only.
-      </div>
-    </div>
-
-    <!-- Correlation Matrix -->
-    <div class="panel">
-      <div class="panel-title" data-i18n="corrMatrix">Correlation Matrix</div>
-      <div class="corr-matrix" id="corrMatrixContainer"></div>
-      <div class="theory-note" data-i18n="corrNote">
-        ρ ranges from −1 (perfect hedge) to +1 (identical). Lower correlation = greater diversification benefit.
+      <div class="info-box" data-i18n="lockHint">
+        💡 Click 🔒 to lock an asset's weight. Optimizer calculates the best % for remaining unlocked assets. Default max 60% per asset prevents over-concentration.
       </div>
     </div>
 
@@ -270,9 +230,6 @@
           <input type="number" id="maxWeight" value="60" onchange="recalculate()">
         </div>
       </div>
-      <div class="theory-note" style="font-size:11px;" data-i18n="constraintNote">
-        Default max 60% prevents over-concentration. Adjust as needed. Use 🔒 lock for precise fixed allocations.
-      </div>
     </div>
 
     <!-- Optimization Method -->
@@ -281,15 +238,15 @@
       <div class="method-grid">
         <div class="method-card active" data-method="maxSharpe" onclick="selectMethod('maxSharpe')">
           <div class="method-card-title" data-i18n="m_maxSharpe">Maximum Sharpe</div>
-          <div class="method-card-desc" data-i18n="m_maxSharpe_desc">Tangency portfolio — best risk-adjusted return</div>
+          <div class="method-card-desc" data-i18n="m_maxSharpe_desc">Best risk-adjusted return</div>
         </div>
         <div class="method-card" data-method="minVar" onclick="selectMethod('minVar')">
           <div class="method-card-title" data-i18n="m_minVar">Min Variance</div>
-          <div class="method-card-desc" data-i18n="m_minVar_desc">Lowest possible portfolio risk</div>
+          <div class="method-card-desc" data-i18n="m_minVar_desc">Lowest possible risk</div>
         </div>
         <div class="method-card" data-method="targetReturn" onclick="selectMethod('targetReturn')">
           <div class="method-card-title" data-i18n="m_targetReturn">Target Return</div>
-          <div class="method-card-desc" data-i18n="m_targetReturn_desc">Meet target return at min risk</div>
+          <div class="method-card-desc" data-i18n="m_targetReturn_desc">Meet target at min risk</div>
         </div>
         <div class="method-card" data-method="maxUtility" onclick="selectMethod('maxUtility')">
           <div class="method-card-title" data-i18n="m_maxUtility">Max Utility</div>
@@ -313,9 +270,9 @@
       </div>
 
       <div class="tab-content active" id="tab-allocation">
-        <div class="panel-title" data-i18n="allocTitle">Portfolio Allocation — Drag sliders to see impact</div>
+        <div class="panel-title" data-i18n="allocTitle">Portfolio Allocation — Drag to Adjust</div>
         <div class="total-alloc-label">
-          <span><span data-i18n="totalAlloc">Total Allocation:</span> <strong id="totalAlloc" style="color:var(--accent);">100%</strong></span>
+          <span><span data-i18n="totalAlloc">Total:</span> <strong id="totalAlloc" style="color:var(--accent);">100%</strong></span>
           <span id="allocWarning"></span>
         </div>
         <div class="total-alloc-bar"><div class="total-alloc-fill" id="totalAllocFill" style="width:100%;"></div></div>
@@ -328,9 +285,9 @@
 
       <div class="tab-content" id="tab-frontier">
         <div class="panel-title" data-i18n="frontierTitle">Efficient Frontier — Risk vs Return</div>
-        <div class="frontier-container"><canvas id="frontierChart" width="800" height="420"></canvas></div>
+        <div style="position:relative;"><canvas id="frontierChart" width="780" height="420" style="width:100%;max-width:780px;"></canvas></div>
         <div class="theory-note" data-i18n="frontierNote">
-          The efficient frontier (Markowitz, 1952 — Nobel Prize 1990) shows the maximum return for each risk level. ★ = tangency portfolio (max Sharpe).
+          The efficient frontier (Markowitz, Nobel Prize 1990) shows the best achievable return for each risk level. ★ = Tangency portfolio (highest Sharpe ratio). ● = Your current portfolio.
         </div>
       </div>
 
@@ -340,19 +297,19 @@
       </div>
 
       <div class="tab-content" id="tab-risk">
-        <div class="panel-title" data-i18n="riskTitle">Risk Budgeting — Component Contribution to Risk (CFA LIII)</div>
+        <div class="panel-title" data-i18n="riskTitle">Risk Budgeting — Contribution to Total Risk</div>
         <div id="riskBudgetDiv"></div>
       </div>
 
       <div class="tab-content" id="tab-goals">
-        <div class="panel-title" data-i18n="goalsTitle">Goals-Based Investing (CFA LIII)</div>
+        <div class="panel-title" data-i18n="goalsTitle">Goals-Based Investing</div>
         <div class="input-row">
           <div class="input-group"><label data-i18n="goalPV">Current Savings (PV)</label><input type="number" id="goalPV" value="500000" onchange="recalculate()"></div>
           <div class="input-group"><label data-i18n="goalPMT">Monthly Contribution</label><input type="number" id="goalPMT" value="3000" onchange="recalculate()"></div>
         </div>
         <div class="input-row">
           <div class="input-group"><label data-i18n="goalFV">Goal Amount (FV)</label><input type="number" id="goalFV" value="2000000" onchange="recalculate()"></div>
-          <div class="input-group"><label data-i18n="goalProb">Required Success Probability (%)</label><input type="number" id="goalProb" value="85" min="50" max="99" onchange="recalculate()"></div>
+          <div class="input-group"><label data-i18n="goalProb">Required Success Rate (%)</label><input type="number" id="goalProb" value="85" min="50" max="99" onchange="recalculate()"></div>
         </div>
         <div id="goalsResults"></div>
       </div>
@@ -360,7 +317,7 @@
       <div class="tab-content" id="tab-bl">
         <div class="panel-title" data-i18n="blTitle">Black-Litterman Model</div>
         <p style="font-size:12px;color:var(--text-dim);margin-bottom:12px;" data-i18n="blDesc">
-          Combines market equilibrium returns with investor views. Confidence: 0% = ignore, 100% = absolute certainty.
+          Combines market equilibrium returns with investor views. Confidence: 0% = ignore, 100% = certain.
         </p>
         <div id="blViewsContainer"></div>
         <button class="btn btn-secondary" onclick="addBLView()" style="margin-top:8px;" data-i18n="addView">+ Add View</button>
@@ -370,114 +327,112 @@
   </div>
 </div>
 
+<!-- PDF Export Modal -->
+<div class="modal-overlay" id="pdfModal">
+  <div class="modal">
+    <h3 data-i18n="pdfTitle">Export Client Proposal (PDF)</h3>
+    <input type="text" id="clientName" placeholder="Client Name / 客戶名稱" onkeydown="if(event.key==='Enter')generatePdf()">
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closePdfModal()" data-i18n="cancel">Cancel</button>
+      <button class="btn" onclick="generatePdf()" data-i18n="generatePdf">Generate PDF</button>
+    </div>
+  </div>
+</div>
+
 <div class="success-msg" id="successMsg"></div>
 
 <script>
 // ═══════════════════════════════════════════
-//  I18N — BILINGUAL EN / 繁中
+//  I18N
 // ═══════════════════════════════════════════
 const I18N = {
   en: {
-    title: 'Portfolio Optimization Dashboard',
-    subtitle: 'CFA Level I-III Framework · MVO · Black-Litterman · Risk Budgeting',
-    export: 'Export', optimize: 'Optimize',
-    clientProfile: 'Client Profile', amount: 'Investment Amount', tenor: 'Tenor (Years)',
-    targetReturn: 'Target Annual Return (%)', rfRate: 'Risk-Free Rate (%)',
-    riskTolerance: 'Risk Tolerance — λ (1 aggressive, 10 conservative)',
-    aggressive: 'Aggressive', conservative: 'Conservative',
-    assetClasses: 'Asset Classes', name: 'Name', yieldCol: 'Yield%', lock: 'Fix',
-    addAsset: '+ Add Asset Class',
-    lockHint: '💡 Click 🔒 to fix an asset\'s weight. The optimizer calculates optimal % for remaining unlocked assets only.',
-    corrMatrix: 'Correlation Matrix',
-    corrNote: 'ρ ranges from −1 (perfect hedge) to +1 (identical). Lower correlation = greater diversification benefit.',
-    constraints: 'Constraints', minWeight: 'Min Weight per Asset (%)', maxWeight: 'Max Weight per Asset (%)',
-    constraintNote: 'Default max 60% prevents over-concentration. Use 🔒 lock for precise fixed allocations.',
-    optMethod: 'Optimization Method',
-    m_maxSharpe: 'Maximum Sharpe', m_maxSharpe_desc: 'Tangency portfolio — best risk-adjusted return',
-    m_minVar: 'Min Variance', m_minVar_desc: 'Lowest possible portfolio risk',
-    m_targetReturn: 'Target Return', m_targetReturn_desc: 'Meet target return at min risk',
-    m_maxUtility: 'Max Utility', m_maxUtility_desc: 'Maximize E(R) − 0.005λσ²',
-    t_allocation: 'Allocation', t_frontier: 'Efficient Frontier', t_metrics: 'Return & Income',
-    t_risk: 'Risk Budgeting', t_goals: 'Goals-Based', t_bl: 'Black-Litterman',
-    allocTitle: 'Portfolio Allocation — Drag sliders to see impact',
-    totalAlloc: 'Total Allocation:', normalize: 'Normalize to 100%', resetOptimal: 'Reset to Optimal',
-    frontierTitle: 'Efficient Frontier — Risk vs Return',
-    frontierNote: 'The efficient frontier (Markowitz, 1952 — Nobel Prize 1990) shows the maximum return for each risk level. ★ = tangency portfolio.',
-    metricsTitle: 'Detailed Returns & Income',
-    riskTitle: 'Risk Budgeting — Component Contribution to Risk (CFA LIII)',
-    goalsTitle: 'Goals-Based Investing (CFA LIII)',
-    goalPV: 'Current Savings (PV)', goalPMT: 'Monthly Contribution',
-    goalFV: 'Goal Amount (FV)', goalProb: 'Required Success Probability (%)',
-    blTitle: 'Black-Litterman Model',
-    blDesc: 'Combines market equilibrium returns with investor views. Confidence: 0% = ignore, 100% = absolute certainty.',
-    addView: '+ Add View',
-    // KPIs
-    kpiER: 'Expected Return', kpiSD: 'Portfolio Risk (σ)', kpiSharpe: 'Sharpe Ratio', kpiUtility: 'Investor Utility',
-    kpiIncome: 'Annual Income', kpiFV: 'Future Value',
-    // Risk labels
-    risk_very_aggr: 'Very Aggressive', risk_aggr: 'Aggressive', risk_mod: 'Moderate', risk_cons: 'Conservative', risk_very_cons: 'Very Conservative',
-    // Goals
-    goalAchievable: '✓ ACHIEVABLE', goalHighRisk: '⚠ HIGH RISK REQUIRED', goalNotAchievable: '⚠ NOT ACHIEVABLE',
-    goalReqReturn: 'Required Annual Return', goalStatus: 'Goal Status', goalMaxAvail: 'Max available return',
-    // Table
-    weight: 'Weight', annER: 'E(R) Ann.', capGrowth: 'Cap. Growth', riskCol: 'σ (Risk)', amtCol: 'Amount', annIncomeCol: 'Ann. Income',
-    portfolio: 'PORTFOLIO',
+    title:'Portfolio Optimization Dashboard', subtitle:'CFA Level I-III Framework · MVO · Black-Litterman · Risk Budgeting',
+    exportPdf:'Export PDF', optimize:'Optimize', clientProfile:'Client Profile', amount:'Investment Amount', tenor:'Tenor (Years)',
+    targetReturn:'Target Annual Return (%)', rfRate:'Risk-Free Rate (%)', riskTolerance:'Risk Tolerance λ',
+    aggressive:'Aggressive', conservative:'Conservative',
+    assetClasses:'Asset Classes', name:'Name', yieldCol:'Yld%', lock:'Fix', addAsset:'+ Add Asset Class',
+    lockHint:'💡 Click 🔒 to lock an asset\'s weight. Optimizer calculates the best % for remaining unlocked assets. Default max 60% prevents over-concentration.',
+    constraints:'Constraints', minWeight:'Min Weight per Asset (%)', maxWeight:'Max Weight per Asset (%)',
+    optMethod:'Optimization Method',
+    m_maxSharpe:'Maximum Sharpe', m_maxSharpe_desc:'Best risk-adjusted return',
+    m_minVar:'Min Variance', m_minVar_desc:'Lowest possible risk',
+    m_targetReturn:'Target Return', m_targetReturn_desc:'Meet target at min risk',
+    m_maxUtility:'Max Utility', m_maxUtility_desc:'Maximize E(R) − 0.005λσ²',
+    t_allocation:'Allocation', t_frontier:'Efficient Frontier', t_metrics:'Return & Income', t_risk:'Risk Budgeting', t_goals:'Goals-Based', t_bl:'Black-Litterman',
+    allocTitle:'Portfolio Allocation — Drag to Adjust', totalAlloc:'Total:', normalize:'Normalize to 100%', resetOptimal:'Reset to Optimal',
+    frontierTitle:'Efficient Frontier — Risk vs Return',
+    frontierNote:'The efficient frontier (Markowitz, Nobel Prize 1990) shows the best achievable return for each risk level. ★ = Tangency portfolio (highest Sharpe). ● = Your current portfolio.',
+    metricsTitle:'Detailed Returns & Income', riskTitle:'Risk Budgeting — Contribution to Total Risk',
+    goalsTitle:'Goals-Based Investing', goalPV:'Current Savings (PV)', goalPMT:'Monthly Contribution', goalFV:'Goal Amount (FV)', goalProb:'Required Success Rate (%)',
+    blTitle:'Black-Litterman Model', blDesc:'Combines market equilibrium returns with investor views. Confidence: 0% = ignore, 100% = certain.', addView:'+ Add View',
+    kpiER:'Expected Return', kpiSD:'Portfolio Risk (σ)', kpiSharpe:'Sharpe Ratio', kpiUtility:'Investor Utility', kpiIncome:'Annual Income', kpiFV:'Future Value',
+    risk_very_aggr:'Very Aggressive', risk_aggr:'Aggressive', risk_mod:'Moderate', risk_cons:'Conservative', risk_very_cons:'Very Conservative',
+    goalAchievable:'✓ ACHIEVABLE', goalHighRisk:'⚠ HIGH RISK REQUIRED', goalNotAchievable:'⚠ NOT ACHIEVABLE',
+    goalReqReturn:'Required Annual Return', goalStatus:'Goal Status', goalMaxAvail:'Max available return',
+    weight:'Weight', annER:'E(R) Ann.', capGrowth:'Cap. Growth', riskCol:'σ (Risk)', amtCol:'Amount', annIncomeCol:'Ann. Income', portfolio:'PORTFOLIO',
+    pdfTitle:'Export Client Proposal (PDF)', cancel:'Cancel', generatePdf:'Generate PDF',
+    tip_er:'Expected annual TOTAL return (capital gains + dividends/interest). E.g. 8% means $100 → $108 in one year.',
+    tip_sd:'Annualized volatility / standard deviation. Measures how much returns fluctuate. Higher = more unpredictable.',
+    tip_sharpe:'Risk-adjusted return. Formula: (Return − Risk-Free Rate) ÷ Risk. Above 1.0 = good, above 2.0 = excellent. Higher is always better.',
+    tip_utility:"Investor satisfaction score: U = E(R) − 0.005 × λ × σ². Higher λ = more risk-averse. Higher utility = better fit for this client's risk profile.",
+    tip_yield:"Annual income (dividends + coupons) as % of investment. This is cash flow you receive without selling assets.",
+    tip_var95:'95% Value-at-Risk: There is a 5% chance (1-in-20) the portfolio loses AT LEAST this amount in one year. Lower = safer.',
+    tip_var99:'99% Value-at-Risk: There is a 1% chance (1-in-100) the portfolio loses AT LEAST this amount in one year.',
+    tip_maxdd:'Estimated maximum peak-to-trough decline over the full investment period. E.g. -25% means the portfolio could temporarily drop 25% from its highest point.',
+    tip_divratio:'Diversification benefit: how much risk is reduced by combining assets. 1.0× = no benefit, 2.0× = risk halved.',
+    bl_note_en:'BL Adjustment: Combined returns blend equilibrium with views. δ (risk aversion coefficient) =',
+    locked:'Locked',
   },
   zh: {
-    title: '投資組合最佳化儀表板',
-    subtitle: 'CFA 第一至三級框架 · 均值-方差最佳化 · Black-Litterman · 風險預算',
-    export: '匯出', optimize: '最佳化',
-    clientProfile: '客戶資料', amount: '投資金額', tenor: '投資年期',
-    targetReturn: '目標年回報 (%)', rfRate: '無風險利率 (%)',
-    riskTolerance: '風險承受度 — λ（1 激進，10 保守）',
-    aggressive: '激進', conservative: '保守',
-    assetClasses: '資產類別', name: '名稱', yieldCol: '收益率%', lock: '鎖定',
-    addAsset: '+ 新增資產類別',
-    lockHint: '💡 點擊 🔒 鎖定資產權重。最佳化引擎只計算未鎖定資產的最優配置比例。',
-    corrMatrix: '相關系數矩陣',
-    corrNote: 'ρ 範圍 −1（完全對沖）至 +1（完全正相關）。相關性越低 = 多元化效益越大。',
-    constraints: '約束條件', minWeight: '每項資產最低權重 (%)', maxWeight: '每項資產最高權重 (%)',
-    constraintNote: '預設最高 60% 防止過度集中。用 🔒 鎖定精確的固定配置。',
-    optMethod: '最佳化方法',
-    m_maxSharpe: '最高夏普比率', m_maxSharpe_desc: '切線投資組合 — 最佳風險調整回報',
-    m_minVar: '最低方差', m_minVar_desc: '投資組合風險最低',
-    m_targetReturn: '目標回報', m_targetReturn_desc: '以最低風險達成目標回報',
-    m_maxUtility: '最大效用', m_maxUtility_desc: '最大化 E(R) − 0.005λσ²',
-    t_allocation: '資產配置', t_frontier: '有效邊界', t_metrics: '回報與收入',
-    t_risk: '風險預算', t_goals: '目標導向', t_bl: 'Black-Litterman',
-    allocTitle: '投資組合配置 — 拖拉滑桿即時查看影響',
-    totalAlloc: '總配置：', normalize: '標準化至 100%', resetOptimal: '重設至最佳化',
-    frontierTitle: '有效邊界 — 風險與回報',
-    frontierNote: '有效邊界（Markowitz, 1952 — 諾貝爾獎 1990）顯示每個風險水平下的最大回報。★ = 切線投資組合。',
-    metricsTitle: '詳細回報與收入',
-    riskTitle: '風險預算 — 風險邊際貢獻分析（CFA LIII）',
-    goalsTitle: '目標導向投資（CFA LIII）',
-    goalPV: '現有儲蓄 (PV)', goalPMT: '每月供款',
-    goalFV: '目標金額 (FV)', goalProb: '要求成功率 (%)',
-    blTitle: 'Black-Litterman 模型',
-    blDesc: '結合市場均衡回報與投資者觀點。信心度：0% = 忽略，100% = 絕對確定。',
-    addView: '+ 新增觀點',
-    kpiER: '預期回報', kpiSD: '組合風險 (σ)', kpiSharpe: '夏普比率', kpiUtility: '投資者效用',
-    kpiIncome: '年度收入', kpiFV: '未來價值',
-    risk_very_aggr: '非常激進', risk_aggr: '激進', risk_mod: '溫和', risk_cons: '保守', risk_very_cons: '非常保守',
-    goalAchievable: '✓ 可以達成', goalHighRisk: '⚠ 需要承受高風險', goalNotAchievable: '⚠ 無法達成',
-    goalReqReturn: '所需年回報', goalStatus: '目標達成狀態', goalMaxAvail: '最高可用回報',
-    weight: '權重', annER: '年回報', capGrowth: '資本增值', riskCol: 'σ (風險)', amtCol: '金額', annIncomeCol: '年度收入',
-    portfolio: '投資組合',
+    title:'投資組合最佳化儀表板', subtitle:'CFA 第一至三級框架 · 均值-方差最佳化 · Black-Litterman · 風險預算',
+    exportPdf:'匯出 PDF', optimize:'最佳化', clientProfile:'客戶資料', amount:'投資金額', tenor:'投資年期',
+    targetReturn:'目標年回報 (%)', rfRate:'無風險利率 (%)', riskTolerance:'風險承受度 λ',
+    aggressive:'激進', conservative:'保守',
+    assetClasses:'資產類別', name:'名稱', yieldCol:'收益率%', lock:'鎖定', addAsset:'+ 新增資產類別',
+    lockHint:'💡 點擊 🔒 鎖定資產權重。最佳化引擎只計算未鎖定資產的最優比例。預設最高 60% 防止過度集中。',
+    constraints:'約束條件', minWeight:'每項最低權重 (%)', maxWeight:'每項最高權重 (%)',
+    optMethod:'最佳化方法',
+    m_maxSharpe:'最高夏普比率', m_maxSharpe_desc:'最佳風險調整回報',
+    m_minVar:'最低方差', m_minVar_desc:'投資組合風險最低',
+    m_targetReturn:'目標回報', m_targetReturn_desc:'以最低風險達成目標',
+    m_maxUtility:'最大效用', m_maxUtility_desc:'最大化 E(R) − 0.005λσ²',
+    t_allocation:'資產配置', t_frontier:'有效邊界', t_metrics:'回報與收入', t_risk:'風險預算', t_goals:'目標導向', t_bl:'Black-Litterman',
+    allocTitle:'投資組合配置 — 拖拉調整', totalAlloc:'總計：', normalize:'標準化至 100%', resetOptimal:'重設至最佳化',
+    frontierTitle:'有效邊界 — 風險與回報',
+    frontierNote:'有效邊界（Markowitz，諾貝爾獎 1990）顯示每個風險水平下的最佳回報。★ = 切線投資組合（最高夏普比率）。● = 目前投資組合。',
+    metricsTitle:'詳細回報與收入', riskTitle:'風險預算 — 對總風險的貢獻',
+    goalsTitle:'目標導向投資', goalPV:'現有儲蓄 (PV)', goalPMT:'每月供款', goalFV:'目標金額 (FV)', goalProb:'要求成功率 (%)',
+    blTitle:'Black-Litterman 模型', blDesc:'結合市場均衡回報與投資者觀點。信心度：0% = 忽略，100% = 確定。', addView:'+ 新增觀點',
+    kpiER:'預期回報', kpiSD:'組合風險 (σ)', kpiSharpe:'夏普比率', kpiUtility:'投資者效用', kpiIncome:'年度收入', kpiFV:'未來價值',
+    risk_very_aggr:'非常激進', risk_aggr:'激進', risk_mod:'溫和', risk_cons:'保守', risk_very_cons:'非常保守',
+    goalAchievable:'✓ 可以達成', goalHighRisk:'⚠ 需承受高風險', goalNotAchievable:'⚠ 無法達成',
+    goalReqReturn:'所需年回報', goalStatus:'目標狀態', goalMaxAvail:'最高可用回報',
+    weight:'權重', annER:'年回報', capGrowth:'資本增值', riskCol:'σ (風險)', amtCol:'金額', annIncomeCol:'年度收入', portfolio:'投資組合',
+    pdfTitle:'匯出客戶建議書 (PDF)', cancel:'取消', generatePdf:'生成 PDF',
+    tip_er:'預期年度總回報（資本增值 + 股息/利息）。例如 8% 即 $100 → 一年後 $108。',
+    tip_sd:'年化波動率/標準差。衡量回報的波動程度。數值越高 = 越不確定。',
+    tip_sharpe:'風險調整回報。公式：（回報 − 無風險利率）÷ 風險。高於 1.0 = 好，高於 2.0 = 優秀。數值越高越好。',
+    tip_utility:'投資者滿意度分數：U = E(R) − 0.005 × λ × σ²。λ 越高 = 越厭惡風險。效用越高 = 越適合此客戶的風險偏好。',
+    tip_yield:'年度收入（股息 + 債息）佔投資額的百分比。這是不需賣出資產即可获得的現金流。',
+    tip_var95:'95% 風險價值（VaR）：有 5% 機率（二十分之一）投資組合在一年內至少損失此金額。數值越低 = 越安全。',
+    tip_var99:'99% 風險價值（VaR）：有 1% 機率（百分之一）投資組合在一年內至少損失此金額。',
+    tip_maxdd:'估計在整個投資期內從最高點至最低點的最大跌幅。例如 -25% 表示投資組合可能從高位暫時下跌 25%。',
+    tip_divratio:'多元化效益：組合資產後風險降低了多少。1.0× = 無效益，2.0× = 風險減半。',
+    bl_note_en:'BL 調整：綜合回報向量和市場均衡（逆向最佳化）與你的觀點。δ（風險厭惡系數）=',
+    locked:'已鎖定',
   }
 };
 let LANG = 'en';
 function t(key) { return I18N[LANG][key] || key; }
+function tip(key) { return `<span class="tip">?<span class="tip-text">${t(key)}</span></span>`; }
+
 function setLang(lang) {
   LANG = lang;
-  document.getElementById('langEN').classList.toggle('active', lang === 'en');
-  document.getElementById('langZH').classList.toggle('active', lang === 'zh');
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    const key = el.getAttribute('data-i18n');
-    el.textContent = t(key);
-  });
-  updateRiskLabel();
-  recalculate();
+  document.getElementById('langEN').classList.toggle('active', lang==='en');
+  document.getElementById('langZH').classList.toggle('active', lang==='zh');
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.getAttribute('data-i18n')); });
+  updateRiskLabel(); recalculate();
 }
 
 // ═══════════════════════════════════════════
@@ -485,10 +440,10 @@ function setLang(lang) {
 // ═══════════════════════════════════════════
 let state = {
   assets: [
-    { name: 'Equities (Dev.)', er: 8.5, sd: 15, yield: 2.0, locked: false, lockWeight: 0 },
-    { name: 'Bonds (IG)',      er: 4.5, sd: 5,  yield: 4.2, locked: false, lockWeight: 0 },
-    { name: 'Gold',            er: 5.0, sd: 16, yield: 0,   locked: false, lockWeight: 0 },
-    { name: 'Cash',            er: 4.0, sd: 0.5, yield: 4.0, locked: false, lockWeight: 0 },
+    { name:'Equities (Dev.)', er:8.5, sd:15, yield:2.0, locked:false, lockWeight:0 },
+    { name:'Bonds (IG)',      er:4.5, sd:5,  yield:4.2, locked:false, lockWeight:0 },
+    { name:'Gold',            er:5.0, sd:16, yield:0,   locked:false, lockWeight:0 },
+    { name:'Cash',            er:4.0, sd:0.5, yield:4.0, locked:false, lockWeight:0 },
   ],
   corr: [
     [1.00, 0.10, -0.10, 0.00],
@@ -498,152 +453,91 @@ let state = {
   ],
   weights: [], optimalWeights: [], method: 'maxSharpe', blViews: [],
 };
-const COLORS = ['#4f46e5', '#059669', '#d97706', '#dc2626', '#7c3aed', '#0891b2', '#db2777', '#ca8a04'];
-const CUR_SYM = { HKD: 'HK$', USD: '$', CNY: '¥', EUR: '€', GBP: '£', SGD: 'S$', JPY: '¥' };
-
+const COLORS = ['#4f46e5','#059669','#d97706','#dc2626','#7c3aed','#0891b2','#db2777','#ca8a04'];
+const CUR_SYM = {HKD:'HK$',USD:'$',CNY:'¥',EUR:'€',GBP:'£',SGD:'S$',JPY:'¥'};
 function curSym() { return CUR_SYM[document.getElementById('currency').value] || '$'; }
-function getAmount() { return parseFloat(document.getElementById('amount').value) || 0; }
+function getAmount() { return parseFloat(document.getElementById('amount').value.replace(/,/g,'')) || 0; }
 function getTenor() { return parseInt(document.getElementById('tenor').value) || 1; }
 function getRf() { return parseFloat(document.getElementById('rfRate').value) / 100; }
 function getLambda() { return parseFloat(document.getElementById('riskAversion').value); }
 function getTarget() { return parseFloat(document.getElementById('targetReturn').value) / 100; }
 
+function onAmountInput(el) {
+  // Strip commas, reformat with commas
+  const raw = el.value.replace(/,/g,'');
+  const num = parseFloat(raw);
+  if (!isNaN(num)) {
+    // Preserve cursor position roughly
+    el.value = num.toLocaleString('en-US');
+  }
+}
+
 // ═══════════════════════════════════════════
-//  RENDER: ASSET TABLE (with lock UI)
+//  ASSET TABLE
 // ═══════════════════════════════════════════
 function renderAssetTable() {
   document.getElementById('assetTableBody').innerHTML = state.assets.map((a, i) => `
     <tr>
-      <td class="name-cell"><input type="text" value="${a.name}" onchange="updateAsset(${i},'name',this.value)"></td>
-      <td><input type="number" value="${a.er}" step="0.5" onchange="updateAsset(${i},'er',parseFloat(this.value))"></td>
-      <td><input type="number" value="${a.sd}" step="0.5" onchange="updateAsset(${i},'sd',parseFloat(this.value))"></td>
-      <td><input type="number" value="${a.yield}" step="0.1" onchange="updateAsset(${i},'yield',parseFloat(this.value))"></td>
-      <td>
-        <button class="lock-btn ${a.locked ? 'locked' : ''}" onclick="toggleLock(${i})" title="${a.locked ? t('locked') : t('lock')}">
-          ${a.locked ? '🔒' : '🔓'}
-        </button>
-      </td>
-      <td>${a.locked ? `<input type="number" class="lock-weight-input" value="${(a.lockWeight*100).toFixed(0)}" step="1" min="0" max="100" onchange="updateLockWeight(${i},parseFloat(this.value))">` : '<span style="color:var(--text-dim);font-size:11px;">—</span>'}</td>
-      <td><button class="remove-btn" onclick="removeAsset(${i})" title="Remove">×</button></td>
+      <td class="col-name"><input type="text" value="${a.name}" onchange="updateAsset(${i},'name',this.value)"></td>
+      <td class="col-num"><input type="number" value="${a.er}" step="0.5" onchange="updateAsset(${i},'er',parseFloat(this.value))"></td>
+      <td class="col-num"><input type="number" value="${a.sd}" step="0.5" onchange="updateAsset(${i},'sd',parseFloat(this.value))"></td>
+      <td class="col-num"><input type="number" value="${a.yield}" step="0.1" onchange="updateAsset(${i},'yield',parseFloat(this.value))"></td>
+      <td class="col-lock"><button class="lock-btn ${a.locked?'locked':''}" onclick="toggleLock(${i})">${a.locked?'🔒':'🔓'}</button></td>
+      <td class="col-w">${a.locked?`<input type="number" class="lock-weight-input" value="${(a.lockWeight*100).toFixed(0)}" step="1" min="0" max="100" onchange="updateLockWeight(${i},parseFloat(this.value))">`:'<span style="color:var(--text-dim);font-size:11px;">—</span>'}</td>
+      <td class="col-rm"><button class="remove-btn" onclick="removeAsset(${i})">×</button></td>
     </tr>`).join('');
   document.getElementById('assetCount').textContent = state.assets.length;
 }
-
-function toggleLock(i) {
-  state.assets[i].locked = !state.assets[i].locked;
-  if (state.assets[i].locked && state.assets[i].lockWeight === 0) {
-    state.assets[i].lockWeight = state.weights[i] || (1 / state.assets.length);
-  }
-  renderAssetTable(); recalculate();
-}
-
-function updateLockWeight(i, pct) {
-  state.assets[i].lockWeight = Math.max(0, Math.min(1, pct / 100));
-  recalculate();
-}
-
-function updateAsset(i, field, val) {
-  state.assets[i][field] = val;
-  if (field === 'name') renderCorrMatrix();
-  recalculate();
-}
-
+function toggleLock(i) { state.assets[i].locked = !state.assets[i].locked; if (state.assets[i].locked && state.assets[i].lockWeight===0) state.assets[i].lockWeight = state.weights[i] || (1/state.assets.length); renderAssetTable(); recalculate(); }
+function updateLockWeight(i, pct) { state.assets[i].lockWeight = Math.max(0, Math.min(1, pct/100)); recalculate(); }
+function updateAsset(i, field, val) { state.assets[i][field] = val; recalculate(); }
 function addAsset() {
   const n = state.assets.length;
-  state.assets.push({ name: 'Asset ' + (n + 1), er: 5, sd: 10, yield: 2, locked: false, lockWeight: 0 });
+  state.assets.push({name:'Asset '+(n+1), er:5, sd:10, yield:2, locked:false, lockWeight:0});
   for (let row of state.corr) row.push(0.1);
-  state.corr.push([...state.corr[0].map(() => 0.1), 1]);
-  renderAssetTable(); renderCorrMatrix(); recalculate();
+  state.corr.push([...state.corr[0].map(()=>0.1), 1]);
+  renderAssetTable(); recalculate();
 }
-
 function removeAsset(i) {
-  if (state.assets.length <= 2) { alert(LANG === 'zh' ? '至少需要 2 項資產' : 'Need at least 2 assets'); return; }
-  state.assets.splice(i, 1); state.corr.splice(i, 1); state.corr.forEach(r => r.splice(i, 1));
-  renderAssetTable(); renderCorrMatrix(); recalculate();
+  if (state.assets.length <= 2) return;
+  state.assets.splice(i, 1); state.corr.splice(i, 1); state.corr.forEach(r=>r.splice(i, 1));
+  renderAssetTable(); recalculate();
 }
-
-// ═══════════════════════════════════════════
-//  RENDER: CORRELATION MATRIX
-// ═══════════════════════════════════════════
-function renderCorrMatrix() {
-  const n = state.assets.length;
-  let html = '<table><thead><tr><th></th>';
-  state.assets.forEach(a => { html += `<th title="${a.name}" style="max-width:50px;overflow:hidden;text-overflow:ellipsis;font-size:10px;">${a.name.substring(0, 4)}</th>`; });
-  html += '</tr></thead><tbody>';
-  for (let i = 0; i < n; i++) {
-    html += `<tr><td title="${state.assets[i].name}" style="max-width:60px;overflow:hidden;text-overflow:ellipsis;text-align:right;font-size:10px;font-weight:600;">${state.assets[i].name.substring(0, 6)}</td>`;
-    for (let j = 0; j < n; j++) {
-      const isDiag = i === j;
-      html += `<td class="${isDiag ? 'diag' : ''}">`;
-      if (isDiag) html += '1.00';
-      else if (j > i) html += `<input type="number" value="${state.corr[i][j].toFixed(2)}" step="0.05" onchange="updateCorr(${i},${j},parseFloat(this.value))" min="-1" max="1">`;
-      else html += `<span style="color:var(--text-dim);">${state.corr[i][j].toFixed(2)}</span>`;
-      html += '</td>';
-    }
-    html += '</tr>';
-  }
-  html += '</tbody></table>';
-  document.getElementById('corrMatrixContainer').innerHTML = html;
-}
-function updateCorr(i, j, val) { val = Math.max(-1, Math.min(1, val)); state.corr[i][j] = val; state.corr[j][i] = val; renderCorrMatrix(); recalculate(); }
 
 // ═══════════════════════════════════════════
 //  METHOD / RISK LABEL
 // ═══════════════════════════════════════════
-function selectMethod(method) {
-  state.method = method;
-  document.querySelectorAll('.method-card').forEach(c => c.classList.toggle('active', c.dataset.method === method));
-  recalculate();
-}
-
+function selectMethod(method) { state.method = method; document.querySelectorAll('.method-card').forEach(c=>c.classList.toggle('active', c.dataset.method===method)); recalculate(); }
 function updateRiskLabel() {
   const lam = getLambda();
-  let label;
-  if (lam <= 1.5) label = t('risk_very_aggr');
-  else if (lam <= 3) label = t('risk_aggr');
-  else if (lam <= 5) label = t('risk_mod');
-  else if (lam <= 7) label = t('risk_cons');
-  else label = t('risk_very_cons');
+  let label = lam<=1.5?t('risk_very_aggr'):lam<=3?t('risk_aggr'):lam<=5?t('risk_mod'):lam<=7?t('risk_cons'):t('risk_very_cons');
   document.getElementById('riskLabel').textContent = `${label} (λ=${lam})`;
 }
 
 // ═══════════════════════════════════════════
-//  CORE: RECALCULATE (with lock support)
+//  RECALCULATE
 // ═══════════════════════════════════════════
 function recalculate() {
-  const n = state.assets.length;
-  if (n < 2) return;
-  const mu = state.assets.map(a => a.er / 100);
-  const sigma = state.assets.map(a => a.sd / 100);
+  const n = state.assets.length; if (n < 2) return;
+  const mu = state.assets.map(a=>a.er/100), sigma = state.assets.map(a=>a.sd/100);
   const cov = buildCovMatrix(sigma, state.corr);
-  const rf = getRf(), amount = getAmount(), tenor = getTenor(), lambda = getLambda(), target = getTarget();
-
-  // Build minW/maxW arrays: locked assets get minW=maxW=lockWeight
-  const globalMin = parseFloat(document.getElementById('minWeight').value) / 100;
-  const globalMax = parseFloat(document.getElementById('maxWeight').value) / 100;
-  const minW = state.assets.map(a => a.locked ? a.lockWeight : globalMin);
-  const maxW = state.assets.map(a => a.locked ? a.lockWeight : globalMax);
-
-  // Check if locked weights sum > 1
-  const sumLocked = state.assets.filter(a => a.locked).reduce((s, a) => s + a.lockWeight, 0);
+  const rf=getRf(), amount=getAmount(), tenor=getTenor(), lambda=getLambda(), target=getTarget();
+  const globalMin = parseFloat(document.getElementById('minWeight').value)/100;
+  const globalMax = parseFloat(document.getElementById('maxWeight').value)/100;
+  const minW = state.assets.map(a=>a.locked?a.lockWeight:globalMin);
+  const maxW = state.assets.map(a=>a.locked?a.lockWeight:globalMax);
+  const sumLocked = state.assets.filter(a=>a.locked).reduce((s,a)=>s+a.lockWeight,0);
   if (sumLocked > 1.001) {
-    document.getElementById('kpiRow').innerHTML = `<div class="kpi-card" style="grid-column:1/-1;"><div class="kpi-label">⚠ ${LANG === 'zh' ? '鎖定權重總和超過 100%' : 'Locked weights exceed 100%'}</div><div class="kpi-value red">${(sumLocked*100).toFixed(0)}% > 100%</div></div>`;
+    document.getElementById('kpiRow').innerHTML = `<div class="kpi-card" style="grid-column:1/-1;"><div class="kpi-label">⚠ ${LANG==='zh'?'鎖定權重總和超過 100%':'Locked weights exceed 100%'}</div><div class="kpi-value red">${(sumLocked*100).toFixed(0)}% > 100%</div></div>`;
     return;
   }
-
   let weights;
-  try {
-    weights = optimizeConstrained(cov, mu, rf, minW, maxW, state.method, target, lambda);
-  } catch (e) {
-    weights = maxSharpeUnconstrained(cov, mu, rf);
-  }
-  weights = weights.map(w => isFinite(w) ? Math.max(0, w) : 0);
-  const wsum = weights.reduce((a, b) => a + b, 0);
-  if (wsum > 0) weights = weights.map(w => w / wsum);
-
-  state.optimalWeights = [...weights];
-  state.weights = [...weights];
-
+  try { weights = optimizeConstrained(cov, mu, rf, minW, maxW, state.method, target, lambda); }
+  catch(e) { weights = maxSharpeUnconstrained(cov, mu, rf); }
+  weights = weights.map(w=>isFinite(w)?Math.max(0,w):0);
+  const wsum = weights.reduce((a,b)=>a+b,0);
+  if (wsum > 0) weights = weights.map(w=>w/wsum);
+  state.optimalWeights = [...weights]; state.weights = [...weights];
   renderKPIs(weights, mu, cov, rf, amount, tenor, lambda);
   renderAllocationSliders();
   renderMetricsTable(weights, mu, cov, amount, tenor, rf);
@@ -654,303 +548,411 @@ function recalculate() {
 }
 
 // ═══════════════════════════════════════════
-//  RENDER: KPIs
+//  KPIs (with tooltips)
 // ═══════════════════════════════════════════
 function renderKPIs(w, mu, cov, rf, amount, tenor, lambda) {
-  const er = portfolioReturn(w, mu);
-  const sd = portfolioStdDev(w, cov);
-  const sharpe = sd > 1e-10 ? (er - rf) / sd : 0;
+  const er = portfolioReturn(w, mu), sd = portfolioStdDev(w, cov);
+  const sharpe = sd>1e-10 ? (er-rf)/sd : 0;
   const u = utility(w, mu, cov, lambda);
-  const incomeYield = Mat.dot(w, state.assets.map(a => a.yield / 100));
-  const fv = amount * Math.pow(1 + er, tenor);
+  const incomeYield = Mat.dot(w, state.assets.map(a=>a.yield/100));
+  const fv = amount * Math.pow(1+er, tenor);
   const cur = curSym();
-  const lockedList = state.assets.filter(a => a.locked).map(a => `${a.name.substring(0,6)}:${(a.lockWeight*100).toFixed(0)}%`);
-
+  const lockedList = state.assets.filter(a=>a.locked).map(a=>`${a.name.substring(0,6)}:${(a.lockWeight*100).toFixed(0)}%`);
   const kpis = [
-    { label: t('kpiER'), value: (er*100).toFixed(2)+'%', sub: LANG==='zh'?'年化預期回報':'Annualized E(Rp)', color: er>0?'green':'red' },
-    { label: t('kpiSD'), value: (sd*100).toFixed(2)+'%', sub: LANG==='zh'?'年化標準差':'Annualized Std Dev', color: 'accent' },
-    { label: t('kpiSharpe'), value: sharpe.toFixed(3), sub: '(E(Rp)−Rf)/σp', color: sharpe>1?'green':'accent' },
-    { label: t('kpiUtility'), value: u.toFixed(4), sub: `E(Rp)−0.005×${lambda}×σ²`, color: 'accent' },
-    { label: t('kpiIncome'), value: cur+(amount*incomeYield).toLocaleString('en-US',{maximumFractionDigits:0}), sub: `${LANG==='zh'?'收益率':'Yield'} ${(incomeYield*100).toFixed(2)}%`, color: 'green' },
-    { label: `${t('kpiFV')} (${tenor}y)`, value: cur+fv.toLocaleString('en-US',{maximumFractionDigits:0}), sub: `${LANG==='zh'?'總回報':'Total return'} ${((fv/amount-1)*100).toFixed(1)}%`, color: 'green' },
+    {label:t('kpiER'), tip:'tip_er', value:(er*100).toFixed(2)+'%', sub:LANG==='zh'?'年度總回報':'Annual total return', color:er>0?'green':'red'},
+    {label:t('kpiSD'), tip:'tip_sd', value:(sd*100).toFixed(2)+'%', sub:LANG==='zh'?'年化波動率':'Annualized volatility', color:'accent'},
+    {label:t('kpiSharpe'), tip:'tip_sharpe', value:sharpe.toFixed(3), sub:LANG==='zh'?'越高越好':'Higher = better', color:sharpe>1?'green':'accent'},
+    {label:t('kpiUtility'), tip:'tip_utility', value:u.toFixed(4), sub:`E(R)−0.005×${lambda}×σ²`, color:'accent'},
+    {label:t('kpiIncome'), tip:'tip_yield', value:cur+(amount*incomeYield).toLocaleString('en-US',{maximumFractionDigits:0}), sub:`${LANG==='zh'?'收益率':'Yield'} ${(incomeYield*100).toFixed(2)}%`, color:'green'},
+    {label:`${t('kpiFV')} (${tenor}y)`, tip:'', value:cur+fv.toLocaleString('en-US',{maximumFractionDigits:0}), sub:`${LANG==='zh'?'總回報':'Total'} ${((fv/amount-1)*100).toFixed(1)}%`, color:'green'},
   ];
-  if (lockedList.length > 0) {
-    kpis.push({ label: LANG==='zh'?'鎖定資產':'Fixed Assets', value: lockedList.length+'', sub: lockedList.join(' · '), color: 'accent' });
-  }
+  if (lockedList.length > 0) kpis.push({label:LANG==='zh'?'鎖定資產':'Fixed Assets', tip:'', value:lockedList.length+'', sub:lockedList.join(' · '), color:'accent'});
   document.getElementById('kpiRow').innerHTML = kpis.map(k => `
-    <div class="kpi-card"><div class="kpi-label">${k.label}</div><div class="kpi-value ${k.color}">${k.value}</div><div class="kpi-sub">${k.sub}</div></div>`).join('');
+    <div class="kpi-card">
+      <div class="kpi-label">${k.label} ${k.tip?tip(k.tip):''}</div>
+      <div class="kpi-value ${k.color}">${k.value}</div>
+      <div class="kpi-sub">${k.sub}</div>
+    </div>`).join('');
 }
 
 // ═══════════════════════════════════════════
-//  RENDER: ALLOCATION SLIDERS
+//  ALLOCATION SLIDERS
 // ═══════════════════════════════════════════
 function renderAllocationSliders() {
-  document.getElementById('allocSliders').innerHTML = state.assets.map((a, i) => {
-    const w = state.weights[i] || 0;
-    const lockedBadge = a.locked ? `<span class="alloc-locked-badge">🔒 ${(a.lockWeight*100).toFixed(0)}%</span>` : '';
-    return `
-      <div class="alloc-slider-row">
-        <div class="alloc-name" title="${a.name}" style="color:${COLORS[i%COLORS.length]}">${a.name}${lockedBadge}</div>
-        <input type="range" class="alloc-slider" min="0" max="100" step="0.5" value="${(w*100).toFixed(1)}"
-               oninput="updateManualAlloc(${i},parseFloat(this.value))"
-               style="accent-color:${COLORS[i%COLORS.length]};" ${a.locked ? 'disabled' : ''}>
-        <div class="alloc-value">${(w*100).toFixed(1)}%<div class="alloc-value-pct">${curSym()}${(w*getAmount()).toLocaleString('en-US',{maximumFractionDigits:0})}</div></div>
-      </div>`;
+  document.getElementById('allocSliders').innerHTML = state.assets.map((a,i) => {
+    const w = state.weights[i]||0;
+    const lb = a.locked?`<span class="alloc-locked-badge">🔒 ${(a.lockWeight*100).toFixed(0)}%</span>`:'';
+    return `<div class="alloc-slider-row">
+      <div class="alloc-name" title="${a.name}" style="color:${COLORS[i%COLORS.length]}">${a.name}${lb}</div>
+      <input type="range" class="alloc-slider" min="0" max="100" step="0.5" value="${(w*100).toFixed(1)}" oninput="updateManualAlloc(${i},parseFloat(this.value))" style="accent-color:${COLORS[i%COLORS.length]};" ${a.locked?'disabled':''}>
+      <div class="alloc-value">${(w*100).toFixed(1)}%<div class="alloc-value-pct">${curSym()}${(w*getAmount()).toLocaleString('en-US',{maximumFractionDigits:0})}</div></div>
+    </div>`;
   }).join('');
   updateTotalAlloc();
 }
-
 function updateManualAlloc(i, val) {
-  state.weights[i] = val / 100;
-  const mu = state.assets.map(a => a.er/100);
-  const cov = buildCovMatrix(state.assets.map(a => a.sd/100), state.corr);
-  const rf = getRf(), amount = getAmount(), tenor = getTenor(), lambda = getLambda();
+  state.weights[i] = val/100;
+  const mu = state.assets.map(a=>a.er/100), cov = buildCovMatrix(state.assets.map(a=>a.sd/100), state.corr);
+  const rf=getRf(), amount=getAmount(), tenor=getTenor(), lambda=getLambda();
   renderKPIs(state.weights, mu, cov, rf, amount, tenor, lambda);
-  renderAllocationSliders();
-  renderMetricsTable(state.weights, mu, cov, amount, tenor, rf);
+  renderAllocationSliders(); renderMetricsTable(state.weights, mu, cov, amount, tenor, rf);
   renderRiskBudget(state.weights, cov, mu, rf);
-  const er = portfolioReturn(state.weights, mu), sd = portfolioStdDev(state.weights, cov);
-  const n = mu.length;
-  drawFrontier(cov, mu, rf, new Array(n).fill(0), new Array(n).fill(1), state.weights, er, sd);
+  const er=portfolioReturn(state.weights,mu), sd=portfolioStdDev(state.weights,cov);
+  drawFrontier(cov, mu, rf, new Array(mu.length).fill(0), new Array(mu.length).fill(1), state.weights, er, sd);
 }
-
 function updateTotalAlloc() {
-  const total = state.weights.reduce((a, b) => a + b, 0);
-  const pct = (total * 100).toFixed(1);
+  const total = state.weights.reduce((a,b)=>a+b,0), pct=(total*100).toFixed(1);
   const fill = document.getElementById('totalAllocFill');
-  fill.style.width = Math.min(100, total * 100) + '%';
-  fill.className = 'total-alloc-fill' + (total > 1.01 ? ' over' : total < 0.99 ? ' under' : '');
-  document.getElementById('totalAlloc').textContent = pct + '%';
-  const warn = document.getElementById('allocWarning');
-  if (Math.abs(total - 1) > 0.001) warn.innerHTML = `<span style="color:var(--orange);">⚠ ${pct}% ${LANG==='zh'?'≠ 100%':'≠ 100%'}</span>`;
-  else warn.innerHTML = '<span style="color:var(--green);">✓</span>';
+  fill.style.width = Math.min(100,total*100)+'%';
+  fill.className = 'total-alloc-fill'+(total>1.01?' over':total<0.99?' under':'');
+  document.getElementById('totalAlloc').textContent = pct+'%';
+  document.getElementById('allocWarning').innerHTML = Math.abs(total-1)>0.001?`<span style="color:var(--orange);">⚠ ${pct}%</span>`:'<span style="color:var(--green);">✓</span>';
 }
-
-function normalizeWeights() {
-  const total = state.weights.reduce((a, b) => a + b, 0);
-  if (total > 0) state.weights = state.weights.map(w => w / total);
-  renderAllocationSliders(); recalculate();
-}
-function resetToOptimal() { state.weights = [...state.optimalWeights]; renderAllocationSliders(); recalculate(); }
+function normalizeWeights() { const total=state.weights.reduce((a,b)=>a+b,0); if(total>0) state.weights=state.weights.map(w=>w/total); renderAllocationSliders(); recalculate(); }
+function resetToOptimal() { state.weights=[...state.optimalWeights]; renderAllocationSliders(); recalculate(); }
 
 // ═══════════════════════════════════════════
-//  RENDER: METRICS TABLE
+//  METRICS TABLE
 // ═══════════════════════════════════════════
 function renderMetricsTable(w, mu, cov, amount, tenor, rf) {
-  const detail = portfolioDetail(w, mu, cov, state.assets.map(a => a.yield/100), amount, tenor, rf);
+  const detail = portfolioDetail(w, mu, cov, state.assets.map(a=>a.yield/100), amount, tenor, rf);
   const cur = curSym();
-  const fmt = (n, d=2) => n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
-  const fmtPct = (n, d=2) => (n*100).toFixed(d)+'%';
-
-  let html = `<thead><tr>
-    <th>${t('name')}</th><th>${t('weight')}</th><th>${t('annER')}</th><th>${t('yieldCol')}</th>
-    <th>${t('capGrowth')}</th><th>${t('riskCol')}</th><th>${t('amtCol')}</th><th>${t('annIncomeCol')}</th><th>${tenor}Y FV</th>
-  </tr></thead><tbody>`;
-  let totW=0, totAmt=0, totInc=0;
-  state.assets.forEach((a, i) => {
+  const fmt = (n,d=2) => n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+  const fmtPct = (n,d=2) => (n*100).toFixed(d)+'%';
+  let html = `<thead><tr><th>${t('name')}</th><th>${t('weight')}</th><th>${t('annER')}</th><th>${t('yieldCol')}</th><th>${t('capGrowth')}</th><th>${t('riskCol')}</th><th>${t('amtCol')}</th><th>${t('annIncomeCol')}</th><th>${tenor}Y FV</th></tr></thead><tbody>`;
+  let totW=0,totAmt=0,totInc=0;
+  state.assets.forEach((a,i) => {
     const wi=w[i], amt=amount*wi, inc=amt*(a.yield/100), fv=amt*Math.pow(1+a.er/100,tenor);
     totW+=wi; totAmt+=amt; totInc+=inc;
-    const lockIcon = a.locked ? ' 🔒' : '';
-    html += `<tr>
-      <td><span style="color:${COLORS[i%COLORS.length]}">●</span> ${a.name}${lockIcon}</td>
-      <td>${fmtPct(wi)}</td>
-      <td class="${a.er>=0?'pos':'neg'}">${a.er.toFixed(2)}%</td>
-      <td>${a.yield.toFixed(2)}%</td>
-      <td class="${(a.er-a.yield)>=0?'pos':'neg'}">${(a.er-a.yield).toFixed(2)}%</td>
-      <td>${a.sd.toFixed(2)}%</td>
-      <td>${cur}${fmt(amt,0)}</td>
-      <td class="pos">${cur}${fmt(inc,0)}</td>
-      <td class="pos">${cur}${fmt(fv,0)}</td></tr>`;
+    html += `<tr><td><span style="color:${COLORS[i%COLORS.length]}">●</span> ${a.name}${a.locked?' 🔒':''}</td><td>${fmtPct(wi)}</td><td class="${a.er>=0?'pos':'neg'}">${a.er.toFixed(2)}%</td><td>${a.yield.toFixed(2)}%</td><td class="${(a.er-a.yield)>=0?'pos':'neg'}">${(a.er-a.yield).toFixed(2)}%</td><td>${a.sd.toFixed(2)}%</td><td>${cur}${fmt(amt,0)}</td><td class="pos">${cur}${fmt(inc,0)}</td><td class="pos">${cur}${fmt(fv,0)}</td></tr>`;
   });
-  html += `<tr class="total-row">
-    <td>${t('portfolio')}</td><td>${fmtPct(totW)}</td>
-    <td class="${detail.annualReturn>=0?'pos':'neg'}">${fmtPct(detail.annualReturn)}</td>
-    <td>${fmtPct(detail.annualIncomeYield)}</td>
-    <td class="${detail.capitalGrowthReturn>=0?'pos':'neg'}">${fmtPct(detail.capitalGrowthReturn)}</td>
-    <td>${fmtPct(detail.stdDev)}</td>
-    <td>${cur}${fmt(totAmt,0)}</td>
-    <td class="pos">${cur}${fmt(totInc,0)}</td>
-    <td class="pos">${cur}${fmt(detail.fv,0)}</td></tr></tbody>`;
-  html += `<tfoot><tr><td colspan="9" style="padding-top:12px;">
-    <table style="width:100%;font-size:11px;"><tr>
-      <td style="color:var(--text-dim);">${t('kpiSharpe')}: <strong style="color:var(--accent);">${detail.sharpe.toFixed(3)}</strong></td>
-      <td style="color:var(--text-dim);">1Y 95% VaR: <strong class="neg">${cur}${fmt(detail.var95Amount,0)}</strong></td>
-      <td style="color:var(--text-dim);">1Y 99% VaR: <strong class="neg">${cur}${fmt(detail.var99Amount,0)}</strong></td>
-      <td style="color:var(--text-dim);">${LANG==='zh'?'估計最大回撤':'Est. Max DD'}: <strong class="neg">${fmtPct(detail.estMaxDD)}</strong></td>
-      <td style="color:var(--text-dim);">${LANG==='zh'?'分散比率':'Diversification'}: <strong style="color:var(--accent);">${detail.diversificationRatio.toFixed(2)}×</strong></td>
-    </tr></table></td></tr></tfoot>`;
+  html += `<tr class="total-row"><td>${t('portfolio')}</td><td>${fmtPct(totW)}</td><td class="${detail.annualReturn>=0?'pos':'neg'}">${fmtPct(detail.annualReturn)}</td><td>${fmtPct(detail.annualIncomeYield)}</td><td class="${detail.capitalGrowthReturn>=0?'pos':'neg'}">${fmtPct(detail.capitalGrowthReturn)}</td><td>${fmtPct(detail.stdDev)}</td><td>${cur}${fmt(totAmt,0)}</td><td class="pos">${cur}${fmt(totInc,0)}</td><td class="pos">${cur}${fmt(detail.fv,0)}</td></tr></tbody>`;
+  html += `<tfoot><tr><td colspan="9" style="padding-top:14px;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;font-size:11px;">
+      <div style="color:var(--text-dim);">${t('kpiSharpe')} ${tip('tip_sharpe')}: <strong style="color:var(--accent);">${detail.sharpe.toFixed(3)}</strong></div>
+      <div style="color:var(--text-dim);">1Y 95% VaR ${tip('tip_var95')}: <strong class="neg">${cur}${fmt(detail.var95Amount,0)}</strong></div>
+      <div style="color:var(--text-dim);">1Y 99% VaR ${tip('tip_var99')}: <strong class="neg">${cur}${fmt(detail.var99Amount,0)}</strong></div>
+      <div style="color:var(--text-dim);">${LANG==='zh'?'整個投資期估計最大回撤':'Est. Max DD ('+tenor+'Y)'} ${tip('tip_maxdd')}: <strong class="neg">${fmtPct(detail.estMaxDD)}</strong></div>
+      <div style="color:var(--text-dim);">${LANG==='zh'?'分散比率':'Diversification'} ${tip('tip_divratio')}: <strong style="color:var(--accent);">${detail.diversificationRatio.toFixed(2)}×</strong></div>
+    </div></td></tr></tfoot>`;
   document.getElementById('metricsTable').innerHTML = html;
 }
 
 // ═══════════════════════════════════════════
-//  RENDER: RISK BUDGET
+//  RISK BUDGET
 // ═══════════════════════════════════════════
 function renderRiskBudget(w, cov, mu, rf) {
   const cctr = componentContributionToRisk(w, cov);
   const mctr = marginalContributionToRisk(w, cov);
   const sigmaP = portfolioStdDev(w, cov);
-  const excess = mu.map(m => m - rf);
-  let html = state.assets.map((a, i) => {
-    const pct = sigmaP > 0 ? (cctr[i]/sigmaP*100) : 0;
-    return `<div class="risk-budget-row">
-      <div style="font-size:12px;font-weight:600;color:${COLORS[i%COLORS.length]}" title="${a.name}">${a.name}</div>
-      <div class="rb-bar-container"><div class="rb-bar" style="width:${pct}%;background:${COLORS[i%COLORS.length]};"></div></div>
-      <div style="font-size:11px;text-align:right;font-variant-numeric:tabular-nums;">${(cctr[i]*100).toFixed(2)}%</div>
-      <div style="font-size:11px;text-align:right;color:var(--text-dim);">${pct.toFixed(1)}%</div></div>`;
+  const excess = mu.map(m=>m-rf);
+  let html = state.assets.map((a,i) => {
+    const pct = sigmaP>0 ? (cctr[i]/sigmaP*100) : 0;
+    return `<div class="risk-budget-row"><div style="font-size:12px;font-weight:600;color:${COLORS[i%COLORS.length]}" title="${a.name}">${a.name}</div><div class="rb-bar-container"><div class="rb-bar" style="width:${pct}%;background:${COLORS[i%COLORS.length]};"></div></div><div style="font-size:11px;text-align:right;font-variant-numeric:tabular-nums;">${(cctr[i]*100).toFixed(2)}%</div><div style="font-size:11px;text-align:right;color:var(--text-dim);">${pct.toFixed(1)}%</div></div>`;
   }).join('');
-  html += `<div class="risk-budget-row" style="margin-top:8px;border-top:2px solid var(--border);padding-top:8px;">
-    <div style="font-size:13px;font-weight:800;">σ ${t('portfolio')}</div><div></div>
-    <div style="font-size:13px;font-weight:800;text-align:right;">${(sigmaP*100).toFixed(2)}%</div>
-    <div style="font-size:11px;color:var(--text-dim);">100%</div></div>`;
-  html += `<div class="theory-note">${LANG==='zh'?'<strong>風險預算檢查：</strong>超額回報/MCTR 比率應在各資產間相等。':'<strong>Risk Budgeting Check:</strong> Excess Return/MCTR ratio should be equal across assets.'}<br>${LANG==='zh'?'目前比率':'Current ratios'}: ${excess.map((e,i)=>`${state.assets[i].name.substring(0,8)}: ${(mctr[i]!==0?e/mctr[i]:0).toFixed(3)}`).join(' | ')}</div>`;
+  html += `<div class="risk-budget-row" style="margin-top:8px;border-top:2px solid var(--border);padding-top:8px;"><div style="font-size:13px;font-weight:800;">σ ${t('portfolio')}</div><div></div><div style="font-size:13px;font-weight:800;text-align:right;">${(sigmaP*100).toFixed(2)}%</div><div style="font-size:11px;color:var(--text-dim);">100%</div></div>`;
+  html += `<div class="theory-note">${LANG==='zh'?'<strong>風險預算檢查：</strong>每項資產對組合總風險的貢獻。所有資產的貢獻加總 = 組合總風險 σ。':'<strong>How to read:</strong> Each bar shows how much that asset contributes to total portfolio risk. All bars sum to 100% = σ<sub>p</sub>.'}</div>`;
   document.getElementById('riskBudgetDiv').innerHTML = html;
 }
 
 // ═══════════════════════════════════════════
-//  RENDER: GOALS-BASED
+//  GOALS-BASED
 // ═══════════════════════════════════════════
 function renderGoals(mu, cov, minW, maxW, amount, tenor) {
-  const pv = parseFloat(document.getElementById('goalPV')?.value || 0);
-  const pmt = parseFloat(document.getElementById('goalPMT')?.value || 0);
-  const goalFV = parseFloat(document.getElementById('goalFV')?.value || 0);
+  const pv = parseFloat(document.getElementById('goalPV')?.value||0);
+  const pmt = parseFloat(document.getElementById('goalPMT')?.value||0);
+  const goalFV = parseFloat(document.getElementById('goalFV')?.value||0);
   const result = goalsBasedAnalysis(pv, pmt, goalFV, tenor, mu, cov, minW, maxW);
   const cur = curSym();
-  let statusColor, statusText;
-  if (!result.achievable) { statusColor='var(--red)'; statusText=t('goalNotAchievable'); }
-  else if (result.requiredReturn > 0.15) { statusColor='var(--orange)'; statusText=t('goalHighRisk'); }
-  else { statusColor='var(--green)'; statusText=t('goalAchievable'); }
+  let sc, st;
+  if (!result.achievable) { sc='var(--red)'; st=t('goalNotAchievable'); }
+  else if (result.requiredReturn > 0.15) { sc='var(--orange)'; st=t('goalHighRisk'); }
+  else { sc='var(--green)'; st=t('goalAchievable'); }
   document.getElementById('goalsResults').innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
-      <div class="kpi-card"><div class="kpi-label">${t('goalReqReturn')}</div><div class="kpi-value ${result.requiredReturn>0.15?'red':'accent'}">${(result.requiredReturn*100).toFixed(2)}%</div><div class="kpi-sub">${LANG==='zh'?'達成 '+cur+goalFV.toLocaleString()+' 需要':'To reach '+cur+goalFV.toLocaleString()+' in'} ${tenor} ${LANG==='zh'?'年':'y'}</div></div>
-      <div class="kpi-card"><div class="kpi-label">${t('goalStatus')}</div><div class="kpi-value" style="color:${statusColor};font-size:16px;margin-top:4px;">${statusText}</div><div class="kpi-sub">${t('goalMaxAvail')}: ${(result.maxAvailableReturn*100).toFixed(2)}%</div></div>
-    </div>
-    <div class="theory-note">${LANG==='zh'?'<strong>目標導向投資（CFA LIII）：</strong>每個目標設定金額、投資年期及最低成功率。若所需回報超過資產組合可提供的水平，表示目標資金不足 — 增加供款、延長年期或降低目標。':'<strong>Goals-Based Investing (CFA LIII):</strong> Each goal has a dollar target, time horizon, and minimum probability of success. If the required return exceeds what the asset mix can deliver, the goal is underfunded.'}</div>`;
+      <div class="kpi-card"><div class="kpi-label">${t('goalReqReturn')}</div><div class="kpi-value ${result.requiredReturn>0.15?'red':'accent'}">${(result.requiredReturn*100).toFixed(2)}%</div><div class="kpi-sub">${LANG==='zh'?'達成 '+cur+goalFV.toLocaleString()+' 需要':'To reach '+cur+goalFV.toLocaleString()+' in'} ${tenor}${LANG==='zh'?'年':'y'}</div></div>
+      <div class="kpi-card"><div class="kpi-label">${t('goalStatus')}</div><div class="kpi-value" style="color:${sc};font-size:16px;margin-top:4px;">${st}</div><div class="kpi-sub">${t('goalMaxAvail')}: ${(result.maxAvailableReturn*100).toFixed(2)}%</div></div>
+    </div>`;
 }
 
 // ═══════════════════════════════════════════
-//  RENDER: BLACK-LITTERMAN
+//  BLACK-LITTERMAN (fixed i18n)
 // ═══════════════════════════════════════════
 function renderBL(mu, cov, rf) {
   const container = document.getElementById('blViewsContainer');
   const n = state.assets.length;
-  if (state.blViews.length === 0) state.blViews.push({ assetIdx: 0, return: 10, confidence: 50 });
+  if (state.blViews.length === 0) state.blViews.push({assetIdx:0, return:10, confidence:50});
   container.innerHTML = `<div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:6px;margin-bottom:6px;font-size:11px;color:var(--text-dim);font-weight:600;"><div>${t('name')}</div><div>${LANG==='zh'?'你的觀點 E(R)%':'Your View E(R)%'}</div><div>${LANG==='zh'?'信心度 %':'Confidence %'}</div></div>` +
-    state.blViews.map((v, i) => `<div class="bl-view-row">
-      <select onchange="updateBLView(${i},'assetIdx',parseInt(this.value))">${state.assets.map((a,j)=>`<option value="${j}" ${v.assetIdx===j?'selected':''}>${a.name}</option>`).join('')}</select>
-      <input type="number" value="${v.return}" step="0.5" onchange="updateBLView(${i},'return',parseFloat(this.value))">
-      <input type="number" value="${v.confidence}" step="5" min="0" max="100" onchange="updateBLView(${i},'confidence',parseFloat(this.value))">
-    </div>`).join('');
-  const wMkt = new Array(n).fill(1/n);
-  const retMkt = portfolioReturn(wMkt, mu);
-  const result = blackLitterman(cov, wMkt, rf, retMkt, state.blViews.map(v => ({ assets:[v.assetIdx], weights:[1], return:v.return/100, confidence:v.confidence/100 })));
+    state.blViews.map((v,i) => `<div class="bl-view-row"><select onchange="updateBLView(${i},'assetIdx',parseInt(this.value))">${state.assets.map((a,j)=>`<option value="${j}" ${v.assetIdx===j?'selected':''}>${a.name}</option>`).join('')}</select><input type="number" value="${v.return}" step="0.5" onchange="updateBLView(${i},'return',parseFloat(this.value))"><input type="number" value="${v.confidence}" step="5" min="0" max="100" onchange="updateBLView(${i},'confidence',parseFloat(this.value))"></div>`).join('');
+  const wMkt = new Array(n).fill(1/n), retMkt = portfolioReturn(wMkt, mu);
+  const result = blackLitterman(cov, wMkt, rf, retMkt, state.blViews.map(v=>({assets:[v.assetIdx],weights:[1],return:v.return/100,confidence:v.confidence/100})));
   const implied = result.impliedReturns, blended = result.blendedReturns;
   let html = '<table class="results-table"><thead><tr><th>Asset</th><th>Input E(R)</th><th>Implied Equil.</th><th>BL Combined</th></tr></thead><tbody>';
-  state.assets.forEach((a, i) => {
-    const diff = blended[i] - mu[i];
+  state.assets.forEach((a,i) => {
+    const diff = blended[i]-mu[i];
     html += `<tr><td><span style="color:${COLORS[i%COLORS.length]}">●</span> ${a.name}</td><td>${(mu[i]*100).toFixed(2)}%</td><td style="color:var(--text-dim);">${(implied[i]*100).toFixed(2)}%</td><td class="${diff>0.001?'pos':diff<-0.001?'neg':''}">${(blended[i]*100).toFixed(2)}%</td></tr>`;
   });
-  html += `</tbody></table><div class="theory-note">${LANG==='zh'?'<strong>BL 調整：</strong>綜合回報向量和市場均衡（逆向最佳化）與你的觀點。δ（風險厭惡系數）=':'<strong>BL Adjustment:</strong> Combined returns blend equilibrium with views. δ ='} ${result.delta.toFixed(3)}</div>`;
+  html += `</tbody></table><div class="theory-note"><strong>${t('bl_note_en')} ${result.delta.toFixed(3)}</strong></div>`;
   document.getElementById('blResults').innerHTML = html;
 }
 function updateBLView(i, field, val) { state.blViews[i][field] = val; recalculate(); }
-function addBLView() { state.blViews.push({ assetIdx: 0, return: 10, confidence: 50 }); recalculate(); }
+function addBLView() { state.blViews.push({assetIdx:0, return:10, confidence:50}); recalculate(); }
 
 // ═══════════════════════════════════════════
-//  RENDER: EFFICIENT FRONTIER CHART
+//  EFFICIENT FRONTIER CHART
 // ═══════════════════════════════════════════
 function drawFrontier(cov, mu, rf, minW, maxW, currentW, currentRet, currentSd) {
   const canvas = document.getElementById('frontierChart');
   if (!canvas || !canvas.getContext) return;
   const ctx = canvas.getContext('2d');
   const W = canvas.width, H = canvas.height;
-  ctx.clearRect(0, 0, W, H);
+  // Clear
   ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
-  const margin = { top: 20, right: 40, bottom: 50, left: 60 };
-  const plotW = W - margin.left - margin.right, plotH = H - margin.top - margin.bottom;
-  const frontier = efficientFrontier(cov, mu, rf, minW, maxW, 80);
-  if (frontier.length < 2) return;
-  const maxSd = Math.max(...frontier.map(p => p.sd)) * 1.15;
-  const minR = Math.min(...frontier.map(p => p.ret)) - 0.01;
-  const maxR = Math.max(...frontier.map(p => p.ret)) + 0.01;
-  const xS = sd => margin.left + sd / maxSd * plotW;
-  const yS = r => margin.top + (1 - (r - minR) / (maxR - minR)) * plotH;
-  // Grid
+  const margin = {top:25, right:30, bottom:50, left:60};
+  const plotW = W-margin.left-margin.right, plotH = H-margin.top-margin.bottom;
+  // Generate frontier points
+  const N = 3000;
+  const points = [];
+  for (let s=0; s<N; s++) {
+    const w = randomFeasibleWeights(minW, maxW, mu.length);
+    const ret = portfolioReturn(w, mu), sd = portfolioStdDev(w, cov);
+    points.push({ret, sd});
+  }
+  if (points.length < 10) return;
+  // Scales
+  const maxSd = Math.max(...points.map(p=>p.sd))*1.15 || 0.2;
+  const minR = Math.min(...points.map(p=>p.ret))-0.01;
+  const maxR = Math.max(...points.map(p=>p.ret))+0.01;
+  const xS = sd => margin.left + (sd/maxSd)*plotW;
+  const yS = r => margin.top + (1-(r-minR)/(maxR-minR))*plotH;
+  // Grid + labels
   ctx.strokeStyle = '#e2e5ed'; ctx.lineWidth = 0.5; ctx.fillStyle = '#6b7280'; ctx.font = '10px sans-serif';
-  for (let sd = 0; sd <= maxSd; sd += maxSd / 5) {
-    const x = xS(sd); ctx.beginPath(); ctx.moveTo(x, margin.top); ctx.lineTo(x, H - margin.bottom); ctx.stroke();
-    ctx.textAlign = 'center'; ctx.fillText((sd*100).toFixed(1)+'%', x, H - margin.bottom + 15);
+  for (let sd=0; sd<=maxSd; sd+=maxSd/5) { const x=xS(sd); ctx.beginPath(); ctx.moveTo(x,margin.top); ctx.lineTo(x,H-margin.bottom); ctx.stroke(); ctx.textAlign='center'; ctx.fillText((sd*100).toFixed(1)+'%', x, H-margin.bottom+15); }
+  for (let r=minR; r<=maxR; r+=(maxR-minR)/5) { const y=yS(r); ctx.beginPath(); ctx.moveTo(margin.left,y); ctx.lineTo(W-margin.right,y); ctx.stroke(); ctx.textAlign='right'; ctx.fillText((r*100).toFixed(1)+'%', margin.left-8, y+3); }
+  // Axis titles
+  ctx.fillStyle='#6b7280'; ctx.font='11px sans-serif'; ctx.textAlign='center';
+  ctx.fillText(LANG==='zh'?'風險 (σ) →':'Risk (σ) →', margin.left+plotW/2, H-12);
+  ctx.save(); ctx.translate(15, margin.top+plotH/2); ctx.rotate(-Math.PI/2); ctx.fillText(LANG==='zh'?'預期回報 →':'Expected Return →', 0, 0); ctx.restore();
+  // Scatter all sampled portfolios (faint)
+  ctx.fillStyle = 'rgba(79,70,229,0.06)';
+  points.forEach(p => { ctx.beginPath(); ctx.arc(xS(p.sd), yS(p.ret), 1.5, 0, 2*Math.PI); ctx.fill(); });
+  // Efficient frontier: sort by return, for each bucket take min sd
+  points.sort((a,b)=>a.ret-b.ret);
+  const minRet = points[0].ret, maxRet = points[points.length-1].ret;
+  const nBuckets = 60;
+  const step = (maxRet-minRet)/nBuckets;
+  const frontier = [];
+  for (let b=0; b<=nBuckets; b++) {
+    const target = minRet + step*b;
+    const bucket = points.filter(p=>Math.abs(p.ret-target)<step*0.6);
+    if (bucket.length===0) continue;
+    const minSd = Math.min(...bucket.map(p=>p.sd));
+    frontier.push({ret:target, sd:minSd});
   }
-  for (let r = minR; r <= maxR; r += (maxR - minR) / 5) {
-    const y = yS(r); ctx.beginPath(); ctx.moveTo(margin.left, y); ctx.lineTo(W - margin.right, y); ctx.stroke();
-    ctx.textAlign = 'right'; ctx.fillText((r*100).toFixed(1)+'%', margin.left - 8, y + 3);
-  }
-  ctx.fillStyle = '#6b7280'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
-  ctx.fillText(LANG==='zh'?'風險 (σ) →':'Risk (σ) →', margin.left + plotW/2, H - 10);
-  ctx.save(); ctx.translate(15, margin.top + plotH/2); ctx.rotate(-Math.PI/2);
-  ctx.fillText(LANG==='zh'?'預期回報 →':'Expected Return →', 0, 0); ctx.restore();
-  // CAL
-  const tanW = maxSharpeUnconstrained(cov, mu, rf);
-  const tanRet = portfolioReturn(tanW, mu), tanSd = portfolioStdDev(tanW, cov);
-  ctx.strokeStyle = '#059669'; ctx.lineWidth = 1.5; ctx.setLineDash([4,4]);
-  ctx.beginPath(); ctx.moveTo(xS(0), yS(rf)); ctx.lineTo(xS(tanSd*1.8), yS(rf+(tanRet-rf)*1.8)); ctx.stroke();
-  ctx.setLineDash([]);
-  // Frontier
+  // Draw frontier line
   ctx.strokeStyle = '#4f46e5'; ctx.lineWidth = 2.5; ctx.beginPath();
-  frontier.forEach((p, i) => { const x = xS(p.sd), y = yS(p.ret); if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
+  frontier.forEach((p,i) => { const x=xS(p.sd), y=yS(p.ret); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
   ctx.stroke();
-  // Tangency ★
-  ctx.fillStyle = '#059669'; ctx.beginPath(); ctx.arc(xS(tanSd), yS(tanRet), 8, 0, 2*Math.PI); ctx.fill();
-  ctx.fillStyle = '#fff'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
-  ctx.fillText('★', xS(tanSd), yS(tanRet) + 4);
-  ctx.fillStyle = '#059669'; ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
-  ctx.fillText(`Tangency: E(R)=${(tanRet*100).toFixed(1)}% σ=${(tanSd*100).toFixed(1)}%`, xS(tanSd)+10, yS(tanRet)-8);
-  // Min-Var
-  const mvW = minVarianceUnconstrained(cov);
-  const mvRet = portfolioReturn(mvW, mu), mvSd = portfolioStdDev(mvW, cov);
-  ctx.fillStyle = '#d97706'; ctx.beginPath(); ctx.arc(xS(mvSd), yS(mvRet), 6, 0, 2*Math.PI); ctx.fill();
-  ctx.font = '10px sans-serif'; ctx.textAlign = 'right'; ctx.fillText('Min Var', xS(mvSd)-8, yS(mvRet)-5);
-  // Current
+  // CAL
+  try {
+    const tanW = maxSharpeUnconstrained(cov, mu, rf);
+    const tanRet = portfolioReturn(tanW, mu), tanSd = portfolioStdDev(tanW, cov);
+    ctx.strokeStyle = '#059669'; ctx.lineWidth = 1.5; ctx.setLineDash([5,4]);
+    ctx.beginPath(); ctx.moveTo(xS(0), yS(rf)); ctx.lineTo(xS(Math.min(maxSd, tanSd*1.6)), yS(rf+(tanRet-rf)*1.6)); ctx.stroke();
+    ctx.setLineDash([]);
+    // Tangency ★
+    ctx.fillStyle = '#059669'; ctx.beginPath(); ctx.arc(xS(tanSd), yS(tanRet), 8, 0, 2*Math.PI); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign='center'; ctx.fillText('★', xS(tanSd), yS(tanRet)+4);
+    ctx.fillStyle = '#059669'; ctx.font = '10px sans-serif'; ctx.textAlign='left';
+    ctx.fillText(`Tangency: E(R)=${(tanRet*100).toFixed(1)}% σ=${(tanSd*100).toFixed(1)}%`, xS(tanSd)+12, yS(tanRet)-8);
+  } catch(e) {}
+  // Min-variance
+  try {
+    const mvW = minVarianceUnconstrained(cov);
+    const mvRet = portfolioReturn(mvW, mu), mvSd = portfolioStdDev(mvW, cov);
+    ctx.fillStyle = '#d97706'; ctx.beginPath(); ctx.arc(xS(mvSd), yS(mvRet), 6, 0, 2*Math.PI); ctx.fill();
+    ctx.font = '10px sans-serif'; ctx.textAlign='right'; ctx.fillText('Min Var', xS(mvSd)-8, yS(mvRet)-5);
+  } catch(e) {}
+  // Current portfolio
   if (currentW) {
-    const er = currentRet !== undefined ? currentRet : portfolioReturn(currentW, mu);
-    const sd = currentSd !== undefined ? currentSd : portfolioStdDev(currentW, cov);
+    const er = currentRet!==undefined ? currentRet : portfolioReturn(currentW, mu);
+    const sd = currentSd!==undefined ? currentSd : portfolioStdDev(currentW, cov);
     ctx.fillStyle = '#dc2626'; ctx.beginPath(); ctx.arc(xS(sd), yS(er), 9, 0, 2*Math.PI); ctx.fill();
-    ctx.fillStyle = '#fff'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('●', xS(sd), yS(er)+4);
-    ctx.fillStyle = '#dc2626'; ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
-    ctx.fillText(`${LANG==='zh'?'目前':'Current'}: E(R)=${(er*100).toFixed(1)}% σ=${(sd*100).toFixed(1)}%`, xS(sd)+10, yS(er)+15);
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign='center'; ctx.fillText('●', xS(sd), yS(er)+4);
+    ctx.fillStyle = '#dc2626'; ctx.font = '10px sans-serif'; ctx.textAlign='left';
+    ctx.fillText(`${LANG==='zh'?'目前':'Current'}: E(R)=${(er*100).toFixed(1)}% σ=${(sd*100).toFixed(1)}%`, xS(sd)+12, yS(er)+16);
   }
-  // Assets
-  state.assets.forEach((a, i) => {
-    ctx.fillStyle = COLORS[i%COLORS.length]; ctx.beginPath();
-    ctx.arc(xS(a.sd/100), yS(a.er/100), 5, 0, 2*Math.PI); ctx.fill();
-    ctx.font = '9px sans-serif'; ctx.textAlign = 'left';
-    ctx.fillText(a.name.substring(0, 8), xS(a.sd/100)+7, yS(a.er/100)-5);
+  // Individual assets
+  state.assets.forEach((a,i) => {
+    ctx.fillStyle = COLORS[i%COLORS.length]; ctx.beginPath(); ctx.arc(xS(a.sd/100), yS(a.er/100), 5, 0, 2*Math.PI); ctx.fill();
+    ctx.font = '9px sans-serif'; ctx.textAlign='left'; ctx.fillText(a.name.substring(0,8), xS(a.sd/100)+7, yS(a.er/100)-5);
   });
 }
 
 // ═══════════════════════════════════════════
-//  TABS / EXPORT
+//  TABS
 // ═══════════════════════════════════════════
 function switchTab(evt, tabId) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
   evt.target.classList.add('active');
-  document.getElementById('tab-' + tabId).classList.add('active');
+  document.getElementById('tab-'+tabId).classList.add('active');
   if (tabId === 'frontier') recalculate();
 }
-function exportData() {
-  const data = { timestamp: new Date().toISOString(), lang: LANG, assets: state.assets, corr: state.corr, weights: state.weights, method: state.method,
-    inputs: { amount: getAmount(), tenor: getTenor(), targetReturn: getTarget()*100, rfRate: getRf()*100, riskAversion: getLambda(), currency: document.getElementById('currency').value } };
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'portfolio-optimization.json'; a.click();
-  showMsg(LANG==='zh'?'已匯出':'Exported');
+
+// ═══════════════════════════════════════════
+//  PDF EXPORT
+// ═══════════════════════════════════════════
+function openPdfModal() { document.getElementById('pdfModal').classList.add('show'); document.getElementById('clientName').focus(); }
+function closePdfModal() { document.getElementById('pdfModal').classList.remove('show'); }
+
+function generatePdf() {
+  const clientName = document.getElementById('clientName').value.trim() || (LANG==='zh'?'客戶':'Client');
+  closePdfModal();
+  const cur = curSym();
+  const amount = getAmount(), tenor = getTenor();
+  const mu = state.assets.map(a=>a.er/100), cov = buildCovMatrix(state.assets.map(a=>a.sd/100), state.corr);
+  const weights = state.weights;
+  const detail = portfolioDetail(weights, mu, cov, state.assets.map(a=>a.yield/100), amount, tenor, getRf());
+  const fmt = (n,d=2) => n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+  const isZH = LANG === 'zh';
+
+  // Generate frontier as image
+  const canvas = document.getElementById('frontierChart');
+  let frontierImg = '';
+  // Temp switch to frontier tab to ensure canvas has content
+  const wasTab = document.querySelector('.tab.active');
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  document.getElementById('tab-frontier').classList.add('active');
+  drawFrontier(cov, mu, getRf(), new Array(mu.length).fill(0), new Array(mu.length).fill(1), weights);
+  try { frontierImg = canvas.toDataURL('image/png'); } catch(e) {}
+  // Restore tab
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  document.getElementById('tab-allocation').classList.add('active');
+  if (wasTab) { document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); wasTab.classList.add('active'); }
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>${clientName} — ${isZH?'投資組合建議書':'Portfolio Proposal'}</title>
+  <style>
+    @page { size: A4; margin: 20mm; }
+    body { font-family: -apple-system, 'Helvetica Neue', sans-serif; color: #1a1d28; font-size: 12px; line-height: 1.6; }
+    .header { text-align:center; padding: 20px 0; border-bottom: 3px solid #4f46e5; margin-bottom: 24px; }
+    .header h1 { font-size: 22px; color: #4f46e5; margin-bottom: 4px; }
+    .header .client { font-size: 16px; font-weight: 600; }
+    .header .date { font-size: 11px; color: #6b7280; }
+    .section { margin-bottom: 24px; page-break-inside: avoid; }
+    .section h2 { font-size: 14px; color: #4f46e5; border-bottom: 1px solid #e2e5ed; padding-bottom: 6px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .kpi-box { background: #f5f6fa; border-radius: 8px; padding: 14px; text-align: center; }
+    .kpi-box .label { font-size: 10px; color: #6b7280; text-transform: uppercase; font-weight: 600; }
+    .kpi-box .value { font-size: 22px; font-weight: 800; margin-top: 4px; }
+    .kpi-box .value.green { color: #059669; } .kpi-box .value.accent { color: #4f46e5; }
+    .kpi-box .sub { font-size: 10px; color: #6b7280; margin-top: 2px; }
+    table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    th { text-align: right; padding: 8px; color: #6b7280; border-bottom: 2px solid #e2e5ed; font-weight: 600; }
+    th:first-child { text-align: left; } td { padding: 8px; border-bottom: 1px solid #e2e5ed; text-align: right; }
+    td:first-child { text-align: left; font-weight: 600; }
+    .total { background: #eef2ff; font-weight: 800; }
+    .alloc-bar { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+    .alloc-bar .name { width: 140px; font-weight: 600; font-size: 11px; }
+    .alloc-bar .bar { flex: 1; height: 18px; background: #f0f2f5; border-radius: 4px; overflow: hidden; }
+    .alloc-bar .fill { height: 100%; border-radius: 4px; }
+    .alloc-bar .pct { width: 50px; text-align: right; font-weight: 700; }
+    .frontier-img { width: 100%; max-width: 500px; display: block; margin: 0 auto; }
+    .footer { text-align: center; font-size: 10px; color: #6b7280; margin-top: 32px; border-top: 1px solid #e2e5ed; padding-top: 12px; }
+    .pos { color: #059669; } .neg { color: #dc2626; }
+  </style></head><body>
+  <div class="header">
+    <h1>${isZH?'投資組合建議書':'Portfolio Investment Proposal'}</h1>
+    <div class="client">${clientName}</div>
+    <div class="date">${new Date().toLocaleDateString(isZH?'zh-HK':'en-US',{year:'numeric',month:'long',day:'numeric'})}</div>
+  </div>
+
+  <div class="section">
+    <h2>${isZH?'1. 客戶資料':'1. Client Profile'}</h2>
+    <table>
+      <tr><td>${isZH?'投資金額':'Investment Amount'}</td><td>${cur}${fmt(amount,0)}</td></tr>
+      <tr><td>${isZH?'投資年期':'Investment Tenor'}</td><td>${tenor} ${isZH?'年':'Years'}</td></tr>
+      <tr><td>${isZH?'貨幣':'Currency'}</td><td>${document.getElementById('currency').value}</td></tr>
+      <tr><td>${isZH?'無風險利率':'Risk-Free Rate'}</td><td>${(getRf()*100).toFixed(2)}%</td></tr>
+      <tr><td>${isZH?'風險承受度':'Risk Tolerance (λ)'}</td><td>${getLambda()}</td></tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>${isZH?'2. 目標投資組合詳情':'2. Target Portfolio Summary'}</h2>
+    <div class="kpi-grid">
+      <div class="kpi-box"><div class="label">${isZH?'預期年回報':'Expected Return'}</div><div class="value green">${(detail.annualReturn*100).toFixed(2)}%</div><div class="sub">${isZH?'總回報（增值+收入）':'Total return (growth+income)'}</div></div>
+      <div class="kpi-box"><div class="label">${isZH?'組合風險':'Portfolio Risk (σ)'}</div><div class="value accent">${(detail.stdDev*100).toFixed(2)}%</div><div class="sub">${isZH?'年化波動率':'Annualized volatility'}</div></div>
+      <div class="kpi-box"><div class="label">${isZH?'夏普比率':'Sharpe Ratio'}</div><div class="value accent">${detail.sharpe.toFixed(3)}</div><div class="sub">${isZH?'越高越好':'Higher = better'}</div></div>
+      <div class="kpi-box"><div class="label">${isZH?'年度收入':'Annual Income'}</div><div class="value green">${cur}${fmt(detail.annualIncome,0)}</div><div class="sub">${isZH?'收益率':'Yield'} ${(detail.annualIncomeYield*100).toFixed(2)}%</div></div>
+      <div class="kpi-box"><div class="label">${isZH?'收益率':'Yield'}</div><div class="value green">${(detail.annualIncomeYield*100).toFixed(2)}%</div><div class="sub">${isZH?'股息+債息':'Dividends + coupons'}</div></div>
+      <div class="kpi-box"><div class="label">${isZH?tenor+'年後未來價值':tenor+'Y Future Value'}</div><div class="value green">${cur}${fmt(detail.fv,0)}</div><div class="sub">${isZH?'總回報':'Total return'} ${((detail.fv/amount-1)*100).toFixed(1)}%</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>${isZH?'3. 資產配置':'3. Asset Allocation'}</h2>
+    ${state.assets.map((a,i) => {
+      const wt = weights[i];
+      return `<div class="alloc-bar"><div class="name" style="color:${COLORS[i%COLORS.length]}">${a.name}</div><div class="bar"><div class="fill" style="width:${wt*100}%;background:${COLORS[i%COLORS.length]};"></div></div><div class="pct">${(wt*100).toFixed(1)}%</div></div>`;
+    }).join('')}
+  </div>
+
+  <div class="section">
+    <h2>${isZH?'4. 有效邊界':'4. Efficient Frontier'}</h2>
+    ${frontierImg ? `<img src="${frontierImg}" class="frontier-img" />` : '<p>Chart unavailable</p>'}
+  </div>
+
+  <div class="section">
+    <h2>${isZH?'5. 回報與收入明細':'5. Return & Income Breakdown'}</h2>
+    <table>
+      <thead><tr><th>${isZH?'資產':'Asset'}</th><th>${isZH?'權重':'Weight'}</th><th>E(R)</th><th>${isZH?'收益率':'Yield'}</th><th>${isZH?'金額':'Amount'}</th><th>${isZH?'年收入':'Ann. Income'}</th><th>${tenor}Y FV</th></tr></thead>
+      <tbody>
+      ${state.assets.map((a,i) => {
+        const wi=weights[i], amt=amount*wi, inc=amt*(a.yield/100), fv=amt*Math.pow(1+a.er/100,tenor);
+        return `<tr><td>${a.name}</td><td>${(wi*100).toFixed(1)}%</td><td>${a.er.toFixed(1)}%</td><td>${a.yield.toFixed(1)}%</td><td>${cur}${fmt(amt,0)}</td><td class="pos">${cur}${fmt(inc,0)}</td><td class="pos">${cur}${fmt(fv,0)}</td></tr>`;
+      }).join('')}
+      <tr class="total"><td>${isZH?'投資組合':'PORTFOLIO'}</td><td>100.0%</td><td>${(detail.annualReturn*100).toFixed(1)}%</td><td>${(detail.annualIncomeYield*100).toFixed(1)}%</td><td>${cur}${fmt(amount,0)}</td><td class="pos">${cur}${fmt(detail.annualIncome,0)}</td><td class="pos">${cur}${fmt(detail.fv,0)}</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>${isZH?'6. 風險指標':'6. Risk Metrics'}</h2>
+    <table>
+      <tr><td>${isZH?'夏普比率':'Sharpe Ratio'}</td><td><strong style="color:#4f46e5">${detail.sharpe.toFixed(3)}</strong></td></tr>
+      <tr><td>${isZH?'1年 95% VaR':'1-Year 95% VaR'}</td><td class="neg">${cur}${fmt(detail.var95Amount,0)} <span style="color:#6b7280;font-size:10px">(${isZH?'5% 機率至少損失此金額':'5% chance of losing at least this'})</span></td></tr>
+      <tr><td>${isZH?tenor+'年估計最大回撤':'Est. Max Drawdown ('+tenor+'Y)'} </td><td class="neg">${(detail.estMaxDD*100).toFixed(1)}% <span style="color:#6b7280;font-size:10px">(${isZH?'從高位至低位最大跌幅':'peak-to-trough decline'})</span></td></tr>
+      <tr><td>${isZH?'分散比率':'Diversification Ratio'}</td><td><strong style="color:#4f46e5">${detail.diversificationRatio.toFixed(2)}×</strong></td></tr>
+    </table>
+  </div>
+
+  <div class="footer">
+    ${isZH?'本建議書僅供參考，不構成投資建議。投資涉及風險，過往表現不代表未來回報。':'This proposal is for reference only and does not constitute investment advice. Investments involve risk; past performance is not indicative of future returns.'}<br>
+    ${isZH?'由 Portfolio Optimization Dashboard 生成':'Generated by Portfolio Optimization Dashboard'} · ${new Date().toISOString().split('T')[0]}
+  </div>
+  `;
+  // Add print script via DOM (avoids script-tag parsing issue)
+  const printScript = document.createElement('script');
+  printScript.textContent = 'window.onload=function(){window.print();};';
+
+  const w = window.open('', '_blank');
+  if (!w) { showMsg(isZH?'請允許彈出視窗':'Please allow popups'); return; }
+  w.document.write(html + '</body></html>');
+  w.document.close();
+  try { w.document.body.appendChild(printScript); } catch(e) {}
 }
-function showMsg(msg) { const el = document.getElementById('successMsg'); el.textContent = msg; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 2000); }
+
+// ═══════════════════════════════════════════
+//  MISC
+// ═══════════════════════════════════════════
+function showMsg(msg) { const el=document.getElementById('successMsg'); el.textContent=msg; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),2000); }
 
 // ═══════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════
-renderAssetTable(); renderCorrMatrix(); updateRiskLabel(); recalculate();
+renderAssetTable(); updateRiskLabel(); recalculate();
 </script>
 </body>
 </html>
