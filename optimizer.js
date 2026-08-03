@@ -571,15 +571,22 @@ function portfolioDetail(w, mu, cov, yields, amount, years, rf) {
   const totalIncome = annualIncome * years;
 
   // Downside risk metrics (CFA Level III)
-  // 95% VaR (parametric, 1-year): -(μ_p - 1.645σ_p) × Amount
-  const var95 = Math.max(0, (annualReturn - 1.645 * stdDev));
-  const var95Amount = -var95 * amount;
-  // 99% VaR
-  const var99 = Math.max(0, (annualReturn - 2.326 * stdDev));
-  const var99Amount = -var99 * amount;
+  // 95% VaR (parametric, 1-year):
+  //   Worst-case loss at 95% confidence = (1.645σ_p − μ_p) × Amount
+  //   i.e. "There is a 5% chance the portfolio loses at least this much in 1 year."
+  //   If the expression is negative, the portfolio is very unlikely to lose money → VaR = 0
+  const var95Raw = (1.645 * stdDev - annualReturn);
+  const var95Amount = Math.max(0, var95Raw * amount);
+  // 99% VaR: 2.326σ
+  const var99Raw = (2.326 * stdDev - annualReturn);
+  const var99Amount = Math.max(0, var99Raw * amount);
 
-  // Max drawdown estimate (approximate: ~2-3σ for diversified portfolios)
-  const estMaxDD = -2.5 * stdDev;
+  // Max drawdown estimate (throughout the tenor, not just 1Y)
+  // Approximation: peak-to-trough decline over the investment horizon.
+  // Uses the formula: MaxDD ≈ σ_p × √(T) × 2.0 (empirical factor for diversified portfolios)
+  // This is a rough estimate — actual max DD depends on path (sequence of returns).
+  const estMaxDD = -2.0 * stdDev * Math.sqrt(years);
+  const estMaxDD1Y = -2.0 * stdDev;
 
   // Diversification ratio: weighted avg σ / portfolio σ
   const weightedAvgSigma = Mat.dot(w, cov.diagonal ? cov.diagonal() : cov.map((row, i) => row[i]).map(Math.sqrt));
@@ -598,7 +605,8 @@ function portfolioDetail(w, mu, cov, yields, amount, years, rf) {
     totalIncome,           // total income over horizon
     var95Amount,           // 1-year 95% VaR
     var99Amount,           // 1-year 99% VaR
-    estMaxDD,              // estimated max drawdown
+    estMaxDD,              // estimated max drawdown over full tenor
+    estMaxDD1Y,            // estimated max drawdown (1-year)
     diversificationRatio,  // diversification benefit
   };
 }
