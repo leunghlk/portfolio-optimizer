@@ -198,24 +198,56 @@ function targetReturnUnconstrained(cov, mu, target) {
  * Uses the Dirichlet-like approach with clipping.
  */
 function randomFeasibleWeights(minW, maxW, n) {
-  for (let attempt = 0; attempt < 100; attempt++) {
-    const raw = Array.from({length: n}, () => Math.random() + 0.01);
-    const sum = raw.reduce((a, b) => a + b, 0);
-    let w = raw.map(r => r / sum);
-    // Clip to bounds
-    w = w.map((wi, i) => Math.max(minW[i], Math.min(maxW[i], wi)));
-    // Renormalize
-    const s = w.reduce((a, b) => a + b, 0);
-    if (s > 0) {
-      w = w.map(wi => wi / s);
-      // Verify bounds after normalization
-      if (w.every((wi, i) => wi >= minW[i] - 0.001 && wi <= maxW[i] + 0.001)) {
-        return w.map((wi, i) => Math.max(minW[i], Math.min(maxW[i], wi)));
-      }
+  // Identify fixed assets (minW === maxW)
+  const fixedIdx = [], freeIdx = [];
+  let sumFixed = 0;
+  for (let i = 0; i < n; i++) {
+    if (Math.abs(maxW[i] - minW[i]) < 1e-10) {
+      fixedIdx.push(i);
+      sumFixed += minW[i];
+    } else {
+      freeIdx.push(i);
     }
   }
-  // Fallback: equal weights within bounds
-  return minW.map((mn, i) => (mn + maxW[i]) / 2);
+  const budget = Math.max(0, 1 - sumFixed);
+  const nFree = freeIdx.length;
+
+  if (nFree === 0) {
+    return minW.slice();
+  }
+
+  for (let attempt = 0; attempt < 100; attempt++) {
+    // Generate random weights only for FREE assets
+    const raw = Array.from({length: nFree}, () => Math.random() + 0.01);
+    const sum = raw.reduce((a, b) => a + b, 0);
+    let wFree = raw.map(r => (r / sum) * budget);
+
+    // Build full weight vector
+    const w = new Array(n).fill(0);
+    for (const i of fixedIdx) w[i] = minW[i];
+    freeIdx.forEach((idx, k) => { w[idx] = wFree[k]; });
+
+    // Clip free assets to bounds, renormalize among free only
+    for (let iter = 0; iter < 20; iter++) {
+      let freeSum = 0;
+      for (const idx of freeIdx) {
+        w[idx] = Math.max(minW[idx], Math.min(maxW[idx], w[idx]));
+        freeSum += w[idx];
+      }
+      if (freeSum > 0 && Math.abs(freeSum - budget) > 0.001) {
+        for (const idx of freeIdx) w[idx] = w[idx] / freeSum * budget;
+      } else break;
+    }
+    // Final clip
+    for (const idx of freeIdx) w[idx] = Math.max(minW[idx], Math.min(maxW[idx], w[idx]));
+    return w;
+  }
+  // Fallback
+  const w = new Array(n).fill(0);
+  const each = budget / nFree;
+  for (const i of fixedIdx) w[i] = minW[i];
+  for (const idx of freeIdx) w[idx] = Math.max(minW[idx], Math.min(maxW[idx], each));
+  return w;
 }
 
 /**
@@ -223,17 +255,36 @@ function randomFeasibleWeights(minW, maxW, n) {
  * Iteratively clips and renormalizes.
  */
 function projectFeasible(w, minW, maxW) {
-  let result = [...w];
-  for (let iter = 0; iter < 50; iter++) {
-    // Clip
-    result = result.map((wi, i) => Math.max(minW[i], Math.min(maxW[i], wi)));
-    // Renormalize
-    const s = result.reduce((a, b) => a + b, 0);
-    if (s > 0) result = result.map(wi => wi / s);
-    // Check feasibility
-    if (result.every((wi, i) => wi >= minW[i] - 0.0001 && wi <= maxW[i] + 0.0001)) break;
+  const n = w.length;
+  // Identify fixed assets
+  const fixedIdx = [], freeIdx = [];
+  let sumFixed = 0;
+  for (let i = 0; i < n; i++) {
+    if (Math.abs(maxW[i] - minW[i]) < 1e-10) { fixedIdx.push(i); sumFixed += minW[i]; }
+    else freeIdx.push(i);
   }
-  return result.map((wi, i) => Math.max(minW[i], Math.min(maxW[i], wi)));
+  const budget = Math.max(0, 1 - sumFixed);
+
+  let result = [...w];
+  // Set fixed assets
+  for (const i of fixedIdx) result[i] = minW[i];
+
+  if (freeIdx.length === 0) return result;
+
+  for (let iter = 0; iter < 50; iter++) {
+    // Clip free assets
+    for (const idx of freeIdx) result[idx] = Math.max(minW[idx], Math.min(maxW[idx], result[idx]));
+    // Renormalize free assets to budget
+    let freeSum = 0;
+    for (const idx of freeIdx) freeSum += result[idx];
+    if (freeSum > 0 && Math.abs(freeSum - budget) > 0.0001) {
+      for (const idx of freeIdx) result[idx] = result[idx] / freeSum * budget;
+    }
+    // Check feasibility
+    if (freeIdx.every(idx => result[idx] >= minW[idx] - 0.0001 && result[idx] <= maxW[idx] + 0.0001)) break;
+  }
+  for (const idx of freeIdx) result[idx] = Math.max(minW[idx], Math.min(maxW[idx], result[idx]));
+  return result;
 }
 
 /**
@@ -312,9 +363,12 @@ function optimizeConstrained(cov, mu, rf, minW, maxW, objective, target, lambda)
     while (improved && iterations < 200) {
       improved = false;
       iterations++;
+      // Skip fixed assets (minW === maxW)
+      const isFixed = idx => Math.abs(maxW[idx] - minW[idx]) < 1e-10;
       for (let i = 0; i < n; i++) {
+        if (isFixed(i)) continue;
         for (let j = 0; j < n; j++) {
-          if (i === j) continue;
+          if (i === j || isFixed(j)) continue;
           // Move weight from j to i
           const wTry = [...bestW];
           const delta = Math.min(step, bestW[j] - minW[j], maxW[i] - bestW[i]);
