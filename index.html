@@ -824,18 +824,21 @@ function renderPdfPortfolioCard(w, mu, cov, amount, tenor, rf, isZH) {
   const d = portfolioDetail(w, mu, cov, state.assets.map(a=>a.yield/100), amount, tenor, rf);
   const fmt = (n,dd=0) => n.toLocaleString('en-US',{minimumFractionDigits:dd,maximumFractionDigits:dd});
   const cur = curSym();
+  const fiveYProfit = d.fv - amount;
   const kpis = [
-    [isZH?'預期年回報':'Expected Return', (d.annualReturn*100).toFixed(2)+'%', isZH?'總回報（增值+收入）':'Total return'],
-    [isZH?'組合風險 (σ)':'Portfolio Risk (σ)', (d.stdDev*100).toFixed(2)+'%', isZH?'年化波動率':'Annualized vol.'],
-    [isZH?'夏普比率':'Sharpe Ratio', d.sharpe.toFixed(3), isZH?'越高越好':'Higher = better'],
-    [isZH?'年度收入':'Annual Income', cur+fmt(d.annualIncome,0), isZH?'收益率':'Yield'+(d.annualIncomeYield*100).toFixed(2)+'%'],
-    [isZH?tenor+'年後未來價值':tenor+'Y FV', cur+fmt(d.fv,0), isZH?'總回報':'Total '+((d.fv/amount-1)*100).toFixed(1)+'%'],
+    [isZH?'預期年回報':'Expected Return', (d.annualReturn*100).toFixed(2)+'%', isZH?'總回報（增值+收入）':'Total return', true],
+    [isZH?'組合風險 (σ)':'Portfolio Risk (σ)', (d.stdDev*100).toFixed(2)+'%', isZH?'年化波動率':'Annualized vol.', false],
+    [isZH?'夏普比率':'Sharpe Ratio', d.sharpe.toFixed(3), isZH?'越高越好':'Higher = better', false],
+    [isZH?'年度收入':'Annual Income', cur+fmt(d.annualIncome,0), isZH?'收益率 '+(d.annualIncomeYield*100).toFixed(2)+'%':'Yield '+(d.annualIncomeYield*100).toFixed(2)+'%', true],
+    [isZH?tenor+'年後未來價值':tenor+'Y FV', cur+fmt(d.fv,0), isZH?'總回報 '+((d.fv/amount-1)*100).toFixed(1)+'%':'Total '+((d.fv/amount-1)*100).toFixed(1)+'%', true],
+    [isZH?tenor+'年收益':'5Y Profit', cur+fmt(fiveYProfit,0), isZH?'未來價值 − 本金':'FV − principal', fiveYProfit>=0],
   ];
   const alloc = state.assets.map((a,i) => {
     const wt = w[i]||0;
-    return `<div class="alloc-bar"><div class="name" style="color:${COLORS[i%COLORS.length]}">${a.name}</div><div class="bar"><div class="fill" style="width:${wt*100}%;background:${COLORS[i%COLORS.length]};"></div></div><div class="pct">${(wt*100).toFixed(1)}%</div></div>`;
+    const col = COLORS[i%COLORS.length];
+    return `<div class="alloc-bar"><span class="dot" style="background:${col}"></span><div class="name">${a.name}</div><div class="bar"><div class="fill" style="width:${Math.max(0,wt*100)}%;background:${col};"></div></div><div class="pct">${(wt*100).toFixed(1)}%</div></div>`;
   }).join('');
-  const kpiHtml = kpis.map(k => `<div class="kpi-box"><div class="label">${k[0]}</div><div class="value ${k[2].includes('Yield')||k[0].includes('Income')||k[0].includes('FV')||k[0].includes('未來')||k[0].includes('Return')?'green':'accent'}">${k[1]}</div><div class="sub">${k[2]}</div></div>`).join('');
+  const kpiHtml = kpis.map(k => `<div class="kpi-box"><div class="label">${k[0]}</div><div class="value ${k[3]?'green':'accent'}">${k[1]}</div><div class="sub">${k[2]}</div></div>`).join('');
   return `<div class="card-kpis">${kpiHtml}</div><div class="card-alloc">${alloc}</div>`;
 }
 
@@ -908,23 +911,24 @@ function generatePdf() {
     .two-col .col { border: 1px solid #e2e5ed; border-radius: 8px; padding: 12px; }
     .two-col .col-title { font-size: 11px; font-weight: 700; color: #007A3D; text-align: center; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px dashed #cdd3df; }
     .two-col .col h3 { font-size: 11px; color: #374151; margin: 12px 0 6px; border-bottom: 1px solid #eef0f4; padding-bottom: 3px; }
-    .card-kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 10px; }
-    .card-alloc { display: flex; flex-direction: column; gap: 3px; }
-    .kpi-box { background: #f5f6fa; border-radius: 6px; padding: 10px; text-align: center; }
-    .kpi-box .label { font-size: 9px; color: #6b7280; text-transform: uppercase; font-weight: 600; }
-    .kpi-box .value { font-size: 18px; font-weight: 800; margin-top: 2px; }
+    .card-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
+    .card-alloc { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
+    .kpi-box { background: #f5f6fa; border-radius: 6px; padding: 9px 6px; text-align: center; }
+    .kpi-box .label { font-size: 8.5px; color: #6b7280; text-transform: uppercase; font-weight: 600; }
+    .kpi-box .value { font-size: 15px; font-weight: 800; margin-top: 2px; }
     .kpi-box .value.green { color: #007A3D; } .kpi-box .value.accent { color: #007A3D; }
-    .kpi-box .sub { font-size: 9px; color: #6b7280; margin-top: 1px; }
+    .kpi-box .sub { font-size: 8px; color: #6b7280; margin-top: 1px; }
     table { width: 100%; border-collapse: collapse; font-size: 10px; }
     th { text-align: right; padding: 5px 6px; color: #6b7280; border-bottom: 2px solid #e2e5ed; font-weight: 600; }
     th:first-child { text-align: left; } td { padding: 5px 6px; border-bottom: 1px solid #e2e5ed; text-align: right; }
     td:first-child { text-align: left; font-weight: 600; }
     .total { background: #eef7f2; font-weight: 800; }
-    .alloc-bar { display: flex; align-items: center; gap: 6px; margin: 3px 0; }
-    .alloc-bar .name { width: 130px; font-weight: 600; font-size: 10px; }
-    .alloc-bar .bar { flex: 1; height: 14px; background: #f0f2f5; border-radius: 3px; overflow: hidden; }
-    .alloc-bar .fill { height: 100%; border-radius: 3px; }
-    .alloc-bar .pct { width: 45px; text-align: right; font-weight: 700; }
+    .alloc-bar { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
+    .alloc-bar .dot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; display: inline-block; }
+    .alloc-bar .name { width: 110px; font-weight: 600; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .alloc-bar .bar { flex: 1; height: 16px; background: #f0f2f5; border-radius: 4px; overflow: hidden; }
+    .alloc-bar .fill { height: 100%; border-radius: 4px; }
+    .alloc-bar .pct { width: 46px; text-align: right; font-weight: 700; font-size: 10px; }
     .frontier-img { width: 100%; max-width: 380px; display: block; margin: 0 auto; }
     .footer { text-align: center; font-size: 9px; color: #6b7280; margin-top: 24px; border-top: 1px solid #e2e5ed; padding-top: 10px; line-height: 1.4; }
     .pos { color: #007A3D; } .neg { color: #dc2626; }
