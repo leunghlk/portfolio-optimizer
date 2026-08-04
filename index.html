@@ -1075,11 +1075,13 @@ function generatePdf() {
     .kpi-box .value { font-size: 13px; font-weight: 800; margin-top: 1px; }
     .kpi-box .value.green { color: #007A3D; } .kpi-box .value.accent { color: #007A3D; } .kpi-box .value.red { color: #c42b1c; }
     .kpi-box .sub { font-size: 7px; color: #6b7280; margin-top: 1px; }
-    /* Client Profile table: auto layout so long labels wrap normally (NOT
-       fixed, which with no colgroup squashes the label column and breaks
-       words into dozens of lines, inflating row height). */
-    .profile-table { table-layout: auto; width: 100%; font-size: 9px; }
-    .profile-table td:first-child { width: 42%; white-space: normal; word-break: normal; overflow-wrap: anywhere; }
+    /* Client Profile table: fixed layout WITH an explicit colgroup so the
+       label column keeps a sane 42% width (auto layout let the long label
+       collapse the column to ~4.5mm and wrap into dozens of lines). */
+    .profile-table { table-layout: fixed; width: 100%; font-size: 9px; }
+    .profile-table col.c-label { width: 42%; }
+    .profile-table col.c-val { width: 58%; }
+    .profile-table td:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .profile-table td { padding: 2px 4px; }
     table { width: 100%; border-collapse: collapse; font-size: 9px; table-layout: fixed; max-width: 100%; }
     th { text-align: right; padding: 4px 3px; color: #6b7280; border-bottom: 2px solid #e2e5ed; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1118,6 +1120,7 @@ function generatePdf() {
   <div class="section">
     <h2>${isZH?'1. 客戶資料':'1. Client Profile'}</h2>
     <table class="profile-table">
+      <colgroup><col class="c-label"><col class="c-val"></colgroup>
       <tr><td>${isZH?'貨幣 / 投資金額':'Currency / Investment Amount'}</td><td>${document.getElementById('currency').value} ${curFmt(amount)}</td></tr>
       ${''/* fee row intentionally removed from Client Profile per Kathy 2026-08-04 — it now lives in the per-portfolio Risk Metrics section */}
       <tr><td>${isZH?'投資年期':'Investment Tenor'}</td><td>${tenor} ${isZH?'年':'Years'}</td></tr>
