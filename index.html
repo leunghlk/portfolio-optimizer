@@ -910,12 +910,10 @@ function renderPdfPortfolioCard(w, mu, cov, amount, tenor, rf, isZH) {
     [isZH?tenor+'年後未來價值':tenor+'Y FV', cur+fmt(d.fv,0), isZH?'總回報 '+((d.fv/amount-1)*100).toFixed(1)+'%':'Total '+((d.fv/amount-1)*100).toFixed(1)+'%', true],
     [isZH?tenor+'年收益':tenor+'Y Profit', cur+fmt(fiveYProfit,0), isZH?'未來價值 − 本金':'FV − principal', fiveYProfit>=0],
   ];
-  // One-off fee row (only when a fee is charged): fee$ / net invested / annual drag
-  if (hasFee) {
-    kpis.push([isZH?'一次性費用':'One-off Fee', '−'+cur+fmt(d.feeAmount,0), (d.feeRate*100).toFixed(2)+'%', false, 'red']);
-    kpis.push([isZH?'淨投資額':'Net Invested', cur+fmt(d.netAmount,0), isZH?'扣除費用後本金':'After fee deduction', true]);
-    kpis.push([isZH?'費用年化拖累':'Fee Drag p.a.', '−'+(d.feeDrag*100).toFixed(2)+'%', isZH?'攤分至每年':'Amortized per year', false, 'red']);
-  }
+  // NOTE: the one-off fee KPI row (fee$ / net invested / fee drag) is deliberately
+  // NOT shown here — Kathy asked to keep the card at 2 rows x 3. The fee is still
+  // fully reflected in the numbers above (E(R) is net of fees, FV uses net capital)
+  // and is itemised in the Return & Income table below.
   const alloc = state.assets.map((a,i) => {
     const wt = w[i]||0;
     const col = COLORS[i%COLORS.length];
@@ -942,7 +940,11 @@ function renderPdfReturnIncome(w, mu, cov, amount, tenor, rf, isZH) {
   }).join('');
   const feeTh = hasFee ? `<th>${isZH?'費用':'Fee'}</th><th>${isZH?'淨投資':'Net Inv.'}</th>` : '';
   const feeTotTd = hasFee ? `<td class="neg">−${cur}${fmt(totFee,0)}</td><td>${cur}${fmt(totNet,0)}</td>` : '';
-  return `<table>
+  // Explicit column widths so every figure (incl. "−HK$425,300") fits on one line.
+  const feeCols = hasFee ? '<col class="c-amt"><col class="c-amt">' : '';
+  const colgroup = `<colgroup><col class="c-name"><col class="c-num"><col class="c-num"><col class="c-num"><col class="c-amt">${feeCols}<col class="c-amt"><col class="c-amt"></colgroup>`;
+  return `<table class="ri-table">
+    ${colgroup}
     <thead><tr><th>${isZH?'資產':'Asset'}</th><th>${isZH?'權重':'Weight'}</th><th>E(R)</th><th>${isZH?'收益率':'Yield'}</th><th>${isZH?'金額':'Amount'}</th>${feeTh}<th>${isZH?'年收入':'Ann. Income'}</th><th>${tenor}Y FV</th></tr></thead>
     <tbody>${rows}
       <tr class="total"><td>${isZH?'投資組合':'PORTFOLIO'}</td><td>100.0%</td><td>${(d.annualReturn*100).toFixed(1)}%</td><td>${(d.annualIncomeYield*100).toFixed(1)}%</td><td>${cur}${fmt(amount,0)}</td>${feeTotTd}<td class="pos">${cur}${fmt(d.annualIncome,0)}</td><td class="pos">${cur}${fmt(d.fv,0)}</td></tr>
@@ -952,16 +954,14 @@ function renderPdfReturnIncome(w, mu, cov, amount, tenor, rf, isZH) {
 // Risk metrics table for a specific portfolio weight vector
 function renderPdfRiskMetrics(w, mu, cov, amount, tenor, rf, isZH) {
   const fees = getFees();
-  const hasFee = fees.some(f => f > 1e-12);
   const d = portfolioDetail(w, mu, cov, state.assets.map(a=>a.yield/100), amount, tenor, rf, fees);
   const cur = curSym();
   const fmt = (n,dd=0) => n.toLocaleString('en-US',{minimumFractionDigits:dd,maximumFractionDigits:dd});
-  const feeRow = hasFee ? `<tr><td>${isZH?'一次性費用（總額）':'One-off Fee (total)'}</td><td class="neg">−${cur}${fmt(d.feeAmount,0)} <span style="color:#6b7280;font-size:9px">(${(d.feeRate*100).toFixed(2)}% ${isZH?'· 開倉時扣除':'· deducted upfront'})</span></td></tr>
-    <tr><td>${isZH?'費用年化拖累':'Fee Drag p.a.'}</td><td class="neg">−${(d.feeDrag*100).toFixed(2)}% <span style="color:#6b7280;font-size:9px">(${isZH?'費前':'gross'} ${(d.grossAnnualReturn*100).toFixed(2)}% → ${isZH?'費後':'net'} ${(d.annualReturn*100).toFixed(2)}%)</span></td></tr>` : '';
+  // Kathy: drop "費用年化拖累" and "1年 95% VaR" from the PDF risk table.
+  // Fee drag is already implicit in the net E(R); 95% VaR duplicates the 99% figure's message.
   return `<table>
     <tr><td>${isZH?'夏普比率':'Sharpe Ratio'}</td><td><strong style="color:#007A3D">${d.sharpe.toFixed(3)}</strong></td></tr>
-    ${feeRow}
-    <tr><td>${isZH?'1年 95% VaR':'1-Year 95% VaR'}</td><td class="neg">${cur}${fmt(d.var95Amount,0)} <span style="color:#6b7280;font-size:9px">(${isZH?'5% 機率至少損失此金額':'5% chance of losing at least this'})</span></td></tr>
+    <tr><td>${isZH?'1年 99% VaR':'1-Year 99% VaR'}</td><td class="neg">${cur}${fmt(d.var99Amount,0)} <span style="color:#6b7280;font-size:9px">(${isZH?'1% 機率至少損失此金額':'1% chance of losing at least this'})</span></td></tr>
     <tr><td>${isZH?tenor+'年估計最大回撤':'Est. Max Drawdown ('+tenor+'Y)'} </td><td class="neg">${(d.estMaxDD*100).toFixed(1)}% <span style="color:#6b7280;font-size:9px">(${isZH?'從高位至低位最大跌幅':'peak-to-trough decline'})</span></td></tr>
     <tr><td>${isZH?'分散比率':'Diversification Ratio'}</td><td><strong style="color:#007A3D">${d.diversificationRatio.toFixed(2)}×</strong></td></tr>
   </table>`;
@@ -1032,10 +1032,20 @@ function generatePdf() {
     .kpi-box .value { font-size: 15px; font-weight: 800; margin-top: 2px; }
     .kpi-box .value.green { color: #007A3D; } .kpi-box .value.accent { color: #007A3D; } .kpi-box .value.red { color: #c42b1c; }
     .kpi-box .sub { font-size: 8px; color: #6b7280; margin-top: 1px; }
-    table { width: 100%; border-collapse: collapse; font-size: 10px; }
-    th { text-align: right; padding: 5px 6px; color: #6b7280; border-bottom: 2px solid #e2e5ed; font-weight: 600; }
-    th:first-child { text-align: left; } td { padding: 5px 6px; border-bottom: 1px solid #e2e5ed; text-align: right; }
-    td:first-child { text-align: left; font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed; }
+    th { text-align: right; padding: 5px 4px; color: #6b7280; border-bottom: 2px solid #e2e5ed; font-weight: 600; white-space: nowrap; }
+    th:first-child { text-align: left; }
+    /* nowrap keeps "−HK$425,300" on ONE line — without it the minus sign wraps
+       onto the previous row and the figure reads as a positive number. */
+    td { padding: 4px 4px; border-bottom: 1px solid #e2e5ed; text-align: right; white-space: nowrap; line-height: 1.25; }
+    td:first-child { text-align: left; font-weight: 600; white-space: normal; word-break: break-word; }
+    /* Return & Income table: give the name column room, keep numeric columns tight
+       and equal so no figure has to wrap. */
+    .ri-table { table-layout: fixed; font-size: 9px; }
+    .ri-table th, .ri-table td { padding: 3px 3px; }
+    .ri-table col.c-name { width: 19%; }
+    .ri-table col.c-num  { width: 9%; }
+    .ri-table col.c-amt  { width: 13%; }
     .total { background: #eef7f2; font-weight: 800; }
     .alloc-bar { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
     .alloc-bar .dot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; display: inline-block; }
@@ -1058,7 +1068,16 @@ function generatePdf() {
     <table>
       <tr><td>${isZH?'貨幣':'Currency'}</td><td>${document.getElementById('currency').value}</td></tr>
       <tr><td>${isZH?'投資金額':'Investment Amount'}</td><td>${cur}${fmt(amount,0)}</td></tr>
-      ${hasFee ? `<tr><td>${isZH?'一次性費用（開倉扣除）':'One-off Fee (deducted upfront)'}</td><td style="color:#c42b1c">−${cur}${fmt(amount*state.assets.reduce((s,a,i)=>s+(wMax[i]||0)*fees[i],0),0)} ~ −${cur}${fmt(amount*state.assets.reduce((s,a,i)=>s+(wMin[i]||0)*fees[i],0),0)}</td></tr>` : ''}
+      ${hasFee ? (() => {
+        const feeMax = amount*state.assets.reduce((s,a,i)=>s+(wMax[i]||0)*fees[i],0);
+        const feeMin = amount*state.assets.reduce((s,a,i)=>s+(wMin[i]||0)*fees[i],0);
+        const lo = Math.min(feeMax,feeMin), hi = Math.max(feeMax,feeMin);
+        // Show a single figure when both target portfolios carry the same fee;
+        // otherwise a range. nbsp inside each figure keeps the minus attached.
+        const one = v => `<span style="white-space:nowrap">−${cur}${fmt(v,0)}</span>`;
+        const val = (hi - lo) < 1 ? one(hi) : `${one(lo)} ~ ${one(hi)}`;
+        return `<tr><td>${isZH?'一次性費用（開倉扣除）':'One-off Fee (deducted upfront)'}</td><td style="color:#c42b1c">${val}</td></tr>`;
+      })() : ''}
       <tr><td>${isZH?'投資年期':'Investment Tenor'}</td><td>${tenor} ${isZH?'年':'Years'}</td></tr>
       <tr><td>${isZH?'目標年回報 (%)':'Target Annual Return (%)'}</td><td>${(getTarget()*100).toFixed(2)}%</td></tr>
       <tr><td>${isZH?'風險承受度 (1-10，10為最保守)':'Risk Tolerance (1-10, 10=most conservative)'}</td><td>${getLambda()}</td></tr>
@@ -1070,7 +1089,7 @@ function generatePdf() {
     <h2>${isZH?'2. 目標投資組合詳情':'2. Target Portfolio Summary'}</h2>
     <div class="two-col">
       <div class="col">
-        <div class="col-title">${isZH?'左：最高夏普比率投資組合 (Max Sharpe)':'Left: Max-Sharpe Portfolio'}</div>
+        <div class="col-title">${isZH?'最高夏普比率投資組合 (Max Sharpe)':'Max-Sharpe Portfolio'}</div>
         ${renderPdfPortfolioCard(wMax, mu, cov, amount, tenor, rf, isZH)}
         <h3>${isZH?'有效邊界':'Efficient Frontier'}</h3>
         ${maxFrontier ? `<img src="${maxFrontier}" class="frontier-img" />` : ''}
@@ -1080,7 +1099,7 @@ function generatePdf() {
         ${renderPdfRiskMetrics(wMax, mu, cov, amount, tenor, rf, isZH)}
       </div>
       <div class="col">
-        <div class="col-title">${isZH?'右：最低風險投資組合 (Min Risk)':'Right: Minimum-Risk Portfolio'}</div>
+        <div class="col-title">${isZH?'最低風險投資組合 (Min Risk)':'Minimum-Risk Portfolio'}</div>
         ${renderPdfPortfolioCard(wMin, mu, cov, amount, tenor, rf, isZH)}
         <h3>${isZH?'有效邊界':'Efficient Frontier'}</h3>
         ${minFrontier ? `<img src="${minFrontier}" class="frontier-img" />` : ''}
