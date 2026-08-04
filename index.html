@@ -249,7 +249,7 @@
           <div class="method-card-desc" data-i18n="m_maxSharpe_desc">Best risk-adjusted return</div>
         </div>
         <div class="method-card" data-method="minVar" onclick="selectMethod('minVar')">
-          <div class="method-card-title" data-i18n="m_minVar">Min Variance</div>
+          <div class="method-card-title" data-i18n="m_minVar">Min Risk</div>
           <div class="method-card-desc" data-i18n="m_minVar_desc">Lowest possible risk</div>
         </div>
         <div class="method-card" data-method="targetReturn" onclick="selectMethod('targetReturn')">
@@ -364,7 +364,7 @@ const I18N = {
     constraints:'Constraints', minWeight:'Min Weight per Asset (%)', maxWeight:'Max Weight per Asset (%)',
     optMethod:'Optimization Method',
     m_maxSharpe:'Maximum Sharpe', m_maxSharpe_desc:'Best risk-adjusted return',
-    m_minVar:'Min Variance', m_minVar_desc:'Lowest possible risk',
+    m_minVar:'Min Risk', m_minVar_desc:'Lowest possible risk',
     m_targetReturn:'Target Return', m_targetReturn_desc:'Meet target at min risk',
     m_maxUtility:'Max Utility', m_maxUtility_desc:'Maximize E(R) − 0.005λσ²',
     t_allocation:'Allocation', t_frontier:'Efficient Frontier', t_metrics:'Return & Income', t_risk:'Risk Budgeting', t_goals:'Goals-Based', t_bl:'Black-Litterman',
@@ -402,7 +402,7 @@ const I18N = {
     constraints:'約束條件', minWeight:'每項最低權重 (%)', maxWeight:'每項最高權重 (%)',
     optMethod:'最佳化方法',
     m_maxSharpe:'最高夏普比率', m_maxSharpe_desc:'最佳風險調整回報',
-    m_minVar:'最低方差', m_minVar_desc:'投資組合風險最低',
+    m_minVar:'最低風險', m_minVar_desc:'投資組合風險最低',
     m_targetReturn:'目標回報', m_targetReturn_desc:'以最低風險達成目標',
     m_maxUtility:'最大效用', m_maxUtility_desc:'最大化 E(R) − 0.005λσ²',
     t_allocation:'資產配置', t_frontier:'有效邊界', t_metrics:'回報與收入', t_risk:'風險預算', t_goals:'目標導向', t_bl:'Black-Litterman',
@@ -637,7 +637,7 @@ function renderMetricsTable(w, mu, cov, amount, tenor, rf) {
   html += `<tr class="total-row"><td>${t('portfolio')}</td><td>${fmtPct(totW)}</td><td class="${detail.annualReturn>=0?'pos':'neg'}">${fmtPct(detail.annualReturn)}</td><td>${fmtPct(detail.annualIncomeYield)}</td><td class="${detail.capitalGrowthReturn>=0?'pos':'neg'}">${fmtPct(detail.capitalGrowthReturn)}</td><td>${fmtPct(detail.stdDev)}</td><td>${cur}${fmt(totAmt,0)}</td><td class="pos">${cur}${fmt(totInc,0)}</td><td class="pos">${cur}${fmt(detail.fv,0)}</td></tr></tbody>`;
   html += `<tfoot><tr><td colspan="9" style="padding-top:14px;">
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;font-size:11px;">
-      <div style="color:var(--text-dim);">${t('kpiSharpe')} ${tip('tip_sharpe')}: <strong style="color:var(--accent);">${detail.sharpe.toFixed(3)}</strong></div>
+      <div style="color:var(--text-dim);">${t('kpiSharpe')}: <strong style="color:var(--accent);">${detail.sharpe.toFixed(3)}</strong></div>
       <div style="color:var(--text-dim);">1Y 95% VaR ${tip('tip_var95')}: <strong class="neg">${cur}${fmt(detail.var95Amount,0)}</strong></div>
       <div style="color:var(--text-dim);">1Y 99% VaR ${tip('tip_var99')}: <strong class="neg">${cur}${fmt(detail.var99Amount,0)}</strong></div>
       <div style="color:var(--text-dim);">${LANG==='zh'?'整個投資期估計最大回撤':'Est. Max DD ('+tenor+'Y)'} ${tip('tip_maxdd')}: <strong class="neg">${fmtPct(detail.estMaxDD)}</strong></div>
@@ -814,6 +814,26 @@ function switchTab(evt, tabId) {
 function openPdfModal() { document.getElementById('pdfModal').classList.add('show'); document.getElementById('clientName').focus(); }
 function closePdfModal() { document.getElementById('pdfModal').classList.remove('show'); }
 
+// Render a single target-portfolio card (KPIs + allocation) for the PDF split view
+function renderPdfPortfolioCard(w, mu, cov, amount, tenor, rf, isZH) {
+  const d = portfolioDetail(w, mu, cov, state.assets.map(a=>a.yield/100), amount, tenor, rf);
+  const fmt = (n,dd=0) => n.toLocaleString('en-US',{minimumFractionDigits:dd,maximumFractionDigits:dd});
+  const cur = curSym();
+  const kpis = [
+    [isZH?'預期年回報':'Expected Return', (d.annualReturn*100).toFixed(2)+'%', isZH?'總回報（增值+收入）':'Total return'],
+    [isZH?'組合風險 (σ)':'Portfolio Risk (σ)', (d.stdDev*100).toFixed(2)+'%', isZH?'年化波動率':'Annualized vol.'],
+    [isZH?'夏普比率':'Sharpe Ratio', d.sharpe.toFixed(3), isZH?'越高越好':'Higher = better'],
+    [isZH?'年度收入':'Annual Income', cur+fmt(d.annualIncome,0), isZH?'收益率':'Yield'+(d.annualIncomeYield*100).toFixed(2)+'%'],
+    [isZH?tenor+'年後未來價值':tenor+'Y FV', cur+fmt(d.fv,0), isZH?'總回報':'Total '+((d.fv/amount-1)*100).toFixed(1)+'%'],
+  ];
+  const alloc = state.assets.map((a,i) => {
+    const wt = w[i]||0;
+    return `<div class="alloc-bar"><div class="name" style="color:${COLORS[i%COLORS.length]}">${a.name}</div><div class="bar"><div class="fill" style="width:${wt*100}%;background:${COLORS[i%COLORS.length]};"></div></div><div class="pct">${(wt*100).toFixed(1)}%</div></div>`;
+  }).join('');
+  const kpiHtml = kpis.map(k => `<div class="kpi-box"><div class="label">${k[0]}</div><div class="value ${k[2].includes('Yield')||k[0].includes('Income')||k[0].includes('FV')||k[0].includes('未來')||k[0].includes('Return')?'green':'accent'}">${k[1]}</div><div class="sub">${k[2]}</div></div>`).join('');
+  return `<div class="card-kpis">${kpiHtml}</div><div class="card-alloc">${alloc}</div>`;
+}
+
 function generatePdf() {
   const clientName = document.getElementById('clientName').value.trim() || (LANG==='zh'?'客戶':'Client');
   closePdfModal();
@@ -851,6 +871,11 @@ function generatePdf() {
     .section { margin-bottom: 16px; page-break-inside: avoid; }
     .section h2 { font-size: 13px; color: #007A3D; border-bottom: 1px solid #e2e5ed; padding-bottom: 4px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.4px; }
     .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .two-col .col { border: 1px solid #e2e5ed; border-radius: 8px; padding: 12px; }
+    .two-col .col-title { font-size: 11px; font-weight: 700; color: #007A3D; text-align: center; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px dashed #cdd3df; }
+    .card-kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 10px; }
+    .card-alloc { display: flex; flex-direction: column; gap: 3px; }
     .kpi-box { background: #f5f6fa; border-radius: 6px; padding: 10px; text-align: center; }
     .kpi-box .label { font-size: 9px; color: #6b7280; text-transform: uppercase; font-weight: 600; }
     .kpi-box .value { font-size: 18px; font-weight: 800; margin-top: 2px; }
@@ -879,23 +904,26 @@ function generatePdf() {
   <div class="section">
     <h2>${isZH?'1. 客戶資料':'1. Client Profile'}</h2>
     <table>
+      <tr><td>${isZH?'貨幣':'Currency'}</td><td>${document.getElementById('currency').value}</td></tr>
       <tr><td>${isZH?'投資金額':'Investment Amount'}</td><td>${cur}${fmt(amount,0)}</td></tr>
       <tr><td>${isZH?'投資年期':'Investment Tenor'}</td><td>${tenor} ${isZH?'年':'Years'}</td></tr>
-      <tr><td>${isZH?'貨幣':'Currency'}</td><td>${document.getElementById('currency').value}</td></tr>
+      <tr><td>${isZH?'目標年回報 (%)':'Target Annual Return (%)'}</td><td>${(getTarget()*100).toFixed(2)}%</td></tr>
+      <tr><td>${isZH?'風險承受度 (1-10，10為最保守)':'Risk Tolerance (1-10, 10=most conservative)'}</td><td>${getLambda()}</td></tr>
       <tr><td>${isZH?'無風險利率':'Risk-Free Rate'}</td><td>${(getRf()*100).toFixed(2)}%</td></tr>
-      <tr><td>${isZH?'風險承受度':'Risk Tolerance (λ)'}</td><td>${getLambda()}</td></tr>
     </table>
   </div>
 
   <div class="section">
     <h2>${isZH?'2. 目標投資組合詳情':'2. Target Portfolio Summary'}</h2>
-    <div class="kpi-grid">
-      <div class="kpi-box"><div class="label">${isZH?'預期年回報':'Expected Return'}</div><div class="value green">${(detail.annualReturn*100).toFixed(2)}%</div><div class="sub">${isZH?'總回報（增值+收入）':'Total return (growth+income)'}</div></div>
-      <div class="kpi-box"><div class="label">${isZH?'組合風險':'Portfolio Risk (σ)'}</div><div class="value accent">${(detail.stdDev*100).toFixed(2)}%</div><div class="sub">${isZH?'年化波動率':'Annualized volatility'}</div></div>
-      <div class="kpi-box"><div class="label">${isZH?'夏普比率':'Sharpe Ratio'}</div><div class="value accent">${detail.sharpe.toFixed(3)}</div><div class="sub">${isZH?'越高越好':'Higher = better'}</div></div>
-      <div class="kpi-box"><div class="label">${isZH?'年度收入':'Annual Income'}</div><div class="value green">${cur}${fmt(detail.annualIncome,0)}</div><div class="sub">${isZH?'收益率':'Yield'} ${(detail.annualIncomeYield*100).toFixed(2)}%</div></div>
-      <div class="kpi-box"><div class="label">${isZH?'收益率':'Yield'}</div><div class="value green">${(detail.annualIncomeYield*100).toFixed(2)}%</div><div class="sub">${isZH?'股息+債息':'Dividends + coupons'}</div></div>
-      <div class="kpi-box"><div class="label">${isZH?tenor+'年後未來價值':tenor+'Y Future Value'}</div><div class="value green">${cur}${fmt(detail.fv,0)}</div><div class="sub">${isZH?'總回報':'Total return'} ${((detail.fv/amount-1)*100).toFixed(1)}%</div></div>
+    <div class="two-col">
+      <div class="col">
+        <div class="col-title">${isZH?'左：最高夏普比率投資組合 (Max Sharpe)':'Left: Max-Sharpe Portfolio'}</div>
+        ${renderPdfPortfolioCard(maxSharpeUnconstrained(cov, mu, getRf()), mu, cov, amount, tenor, getRf(), isZH)}
+      </div>
+      <div class="col">
+        <div class="col-title">${isZH?'右：最低風險投資組合 (Min Risk)':'Right: Minimum-Risk Portfolio'}</div>
+        ${renderPdfPortfolioCard(minVarianceUnconstrained(cov), mu, cov, amount, tenor, getRf(), isZH)}
+      </div>
     </div>
   </div>
 
