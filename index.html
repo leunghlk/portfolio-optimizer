@@ -891,7 +891,11 @@ function switchTab(evt, tabId) {
 // ═══════════════════════════════════════════
 //  PDF EXPORT
 // ═══════════════════════════════════════════
-function openPdfModal() { document.getElementById('pdfModal').classList.add('show'); const cn=document.getElementById('clientName'); cn.focus(); setTimeout(generatePdf, 300); }
+function openPdfModal() { document.getElementById('pdfModal').classList.add('show'); const cn=document.getElementById('clientName'); cn.focus(); }
+// NOTE: we deliberately do NOT auto-generate on open — doing so fired generatePdf()
+// with an EMPTY client name, which opened the preview tab before the user typed
+// anything, so the PDF had no name. Generation now only happens after the user
+// types (oninput debounce / blur / Enter / Generate button).
 function closePdfModal() { document.getElementById('pdfModal').classList.remove('show'); const pv=document.getElementById('pdfPreview'); if(pv){pv.style.display='none'; pv.srcdoc='';} const pb=document.getElementById('pdfPrintBtn'); if(pb) pb.style.display='none'; }
 
 // Render a single target-portfolio card (KPIs + allocation) for the PDF split view
@@ -995,7 +999,8 @@ function pdfMoney(n, cur, dec) {
 
 function generatePdf() {
   const clientName = document.getElementById('clientName').value.trim() || (LANG==='zh'?'客戶':'Client');
-  closePdfModal();
+  // Do NOT closePdfModal() here: the modal stays open while the user types so the
+  // iframe preview updates live, and a new tab opens with the (named) proposal.
   const cur = curSym();
   const amount = getAmount(), tenor = getTenor();
   try {
