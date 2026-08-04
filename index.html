@@ -363,7 +363,7 @@
   <div class="modal modal-wide">
     <button class="modal-close" onclick="closePdfModal()" title="Close & return to dashboard">×</button>
     <h3 data-i18n="pdfTitle">Export Client Proposal (PDF)</h3>
-    <input type="text" id="clientName" placeholder="Client Name / 客戶名稱" onkeydown="if(event.key==='Enter')generatePdf()">
+    <input type="text" id="clientName" placeholder="Client Name / 客戶名稱" onkeydown="if(event.key==='Enter')generatePdf()" oninput="clearTimeout(window.__pdfDebounce); window.__pdfDebounce=setTimeout(generatePdf,700)" onblur="generatePdf()">
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="closePdfModal()" data-i18n="cancel">Cancel</button>
       <button class="btn" onclick="generatePdf()" data-i18n="generatePdf">Generate PDF</button>
@@ -891,7 +891,7 @@ function switchTab(evt, tabId) {
 // ═══════════════════════════════════════════
 //  PDF EXPORT
 // ═══════════════════════════════════════════
-function openPdfModal() { document.getElementById('pdfModal').classList.add('show'); document.getElementById('clientName').focus(); }
+function openPdfModal() { document.getElementById('pdfModal').classList.add('show'); const cn=document.getElementById('clientName'); cn.focus(); setTimeout(generatePdf, 300); }
 function closePdfModal() { document.getElementById('pdfModal').classList.remove('show'); const pv=document.getElementById('pdfPreview'); if(pv){pv.style.display='none'; pv.srcdoc='';} const pb=document.getElementById('pdfPrintBtn'); if(pb) pb.style.display='none'; }
 
 // Render a single target-portfolio card (KPIs + allocation) for the PDF split view
@@ -1028,6 +1028,36 @@ function generatePdf() {
   let wMax, wMin;
   try { wMax = optimizeConstrained(cov, muNet, rf, minW, maxW, 'maxSharpe', null, getLambda()); } catch(e) { wMax = new Array(muSafe.length).fill(1/muSafe.length); }
   try { wMin = optimizeConstrained(cov, muNet, rf, minW, maxW, 'minVar', null, getLambda()); } catch(e) { wMin = new Array(muSafe.length).fill(1/muSafe.length); }
+
+  // ── AUTO-SCAN + FIX portfolio weights ──────────────────────────────────────
+  // An optimizer can return a vector that doesn't sum to 100% (e.g. min-variance
+  // collapses two assets to exactly 0%), which corrupts the KPIs (Sharpe -> -993)
+  // and leaves the total weight < 100%. We (a) renormalize to 100%, (b) force every
+  // UNLOCKED asset to at least globalMin so no non-trivial asset silently drops to
+  // 0% unless the user explicitly locked it there, then (c) renormalize again.
+  const sanitizeWeights = (w, mn, mx) => {
+    const n = w.length;
+    if (n === 0) return w;
+    let v = w.map(x => (isFinite(x) && x > 0) ? x : 0);
+    const locked = state.assets.map((a,i) => a.locked);
+    const gMin = globalMin;
+    // Step 1: floor every unlocked asset at gMin (so 0% only if explicitly locked)
+    for (let i=0;i<n;i++) if (!locked[i] && v[i] < gMin) v[i] = gMin;
+    // Step 2: renormalize to sum 1, but keep locked weights fixed
+    const lockSum = v.reduce((s,x,i)=> s + (locked[i]?x:0), 0);
+    const freeIdx = []; for (let i=0;i<n;i++) if (!locked[i]) freeIdx.push(i);
+    const freeTarget = Math.max(0, 1 - lockSum);
+    const freeSum = freeIdx.reduce((s,i)=> s + v[i], 0);
+    if (freeIdx.length === 0) return v;            // all locked: leave as-is
+    if (freeSum <= 1e-9) {                          // optimizer gave all-zeros -> equal weight
+      freeIdx.forEach(i => v[i] = freeTarget / freeIdx.length);
+    } else {
+      freeIdx.forEach(i => v[i] = v[i] / freeSum * freeTarget);
+    }
+    return v;
+  };
+  wMax = sanitizeWeights(wMax, minW, maxW);
+  wMin = sanitizeWeights(wMin, minW, maxW);
   const zeros = new Array(mu.length).fill(0), ones = new Array(mu.length).fill(1);
   const prevW = state.weights ? [...state.weights] : null;
   const prevMethod = state.method;
@@ -1113,7 +1143,7 @@ function generatePdf() {
     .alloc-bar .bar { flex: 1; height: 14px; background: #f0f2f5; border-radius: 4px; overflow: hidden; }
     .alloc-bar .fill { height: 100%; border-radius: 4px; }
     .alloc-bar .pct { width: 40px; text-align: right; font-weight: 700; font-size: 9px; }
-    .frontier-img { width: 100%; max-width: 200px; height: auto; display: block; margin: 0 auto; page-break-inside: avoid; border: 1px solid #e2e5ed; border-radius: 4px; background: #fff; }
+    .frontier-img { width: 100%; max-width: 260px; height: auto; display: block; margin: 0 auto; page-break-inside: avoid; border: 1px solid #e2e5ed; border-radius: 4px; background: #fff; }
     .footer { text-align: center; font-size: 7.5px; color: #6b7280; margin-top: 6px; border-top: 1px solid #e2e5ed; padding-top: 4px; line-height: 1.25; }
     .pos { color: #007A3D; } .neg { color: #dc2626; }
   </style></head><body>
@@ -1172,6 +1202,24 @@ function generatePdf() {
   w.style.display = 'block';
   printBtn.style.display = 'inline-block';
   showMsg(isZH?'預覽已生成，撳「Print / Save PDF」存檔':'Preview ready — click Print / Save PDF');
+
+  // Open the proposal in a NEW BROWSER TAB so preview/save behaves the same on
+  // every device (Mac, Windows, phone). We reuse one tab per session instead of
+  // spawning a new one on every keystroke. The new tab auto-triggers print so the
+  // user can untick "Headers and footers" then Save as PDF.
+  try {
+    if (typeof window.open !== 'function') throw 0; // jsdom / unsupported env
+    if (!window.__pdfWin || window.__pdfWin.closed) {
+      window.__pdfWin = window.open('', '_blank');
+    }
+    const pw = window.__pdfWin;
+    if (pw) {
+      pw.document.open();
+      pw.document.write(html + '</body></html>');
+      pw.document.close();
+      pw.onload = () => { setTimeout(() => { try { pw.focus(); pw.print(); } catch(e){} }, 400); };
+    }
+  } catch(e) { /* popup blocked — iframe preview still works */ }
   } catch(e) {
     console.error('generatePdf error:', e);
     showMsg((isZH?'PDF 生成失敗：':'PDF generation failed: ') + (e && e.message ? e.message : e));
