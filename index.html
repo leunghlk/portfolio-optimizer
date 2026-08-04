@@ -1056,17 +1056,17 @@ function generatePdf() {
        saved PDF looks blank. Force exact rendering + keep backgrounds. */
     * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     html, body { height: auto !important; }
-    body { font-family: -apple-system, 'Helvetica Neue', sans-serif; color: #1a1d28; font-size: 9px; line-height: 1.25; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .header { text-align:center; padding: 6px 0; border-bottom: 3px solid #007A3D; margin-bottom: 8px; }
-    .header h1 { font-size: 16px; color: #007A3D; margin-bottom: 1px; }
-    .header .client { font-size: 12px; font-weight: 600; }
+    body { font-family: -apple-system, 'Helvetica Neue', sans-serif; color: #1a1d28; font-size: 8.5px; line-height: 1.2; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .header { text-align:center; padding: 5px 0; border-bottom: 3px solid #007A3D; margin-bottom: 6px; }
+    .header h1 { font-size: 15px; color: #007A3D; margin-bottom: 1px; }
+    .header .client { font-size: 11px; font-weight: 600; }
     .header .date { font-size: 8px; color: #6b7280; }
-    .section { margin-bottom: 6px; }
-    .section > h2 { font-size: 11px; color: #007A3D; border-bottom: 1px solid #e2e5ed; padding-bottom: 2px; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .section { margin-bottom: 5px; }
+    .section > h2 { font-size: 10.5px; color: #007A3D; border-bottom: 1px solid #e2e5ed; padding-bottom: 2px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
     .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .two-col .col { border: 1px solid #e2e5ed; border-radius: 8px; padding: 6px; }
-    .two-col .col-title { font-size: 9.5px; font-weight: 700; color: #007A3D; text-align: center; margin-bottom: 5px; padding-bottom: 3px; border-bottom: 1px dashed #cdd3df; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+    .two-col .col { border: 1px solid #e2e5ed; border-radius: 6px; padding: 5px; }
+    .two-col .col-title { font-size: 9px; font-weight: 700; color: #007A3D; text-align: center; margin-bottom: 4px; padding-bottom: 2px; border-bottom: 1px dashed #cdd3df; }
     .two-col .col h3 { font-size: 9.5px; color: #374151; margin: 6px 0 3px; border-bottom: 1px solid #eef0f4; padding-bottom: 2px; }
     .card-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: 5px; }
     .card-alloc { display: flex; flex-direction: column; gap: 2px; margin-top: 2px; }
