@@ -1032,20 +1032,23 @@ function generatePdf() {
     .kpi-box .value { font-size: 15px; font-weight: 800; margin-top: 2px; }
     .kpi-box .value.green { color: #007A3D; } .kpi-box .value.accent { color: #007A3D; } .kpi-box .value.red { color: #c42b1c; }
     .kpi-box .sub { font-size: 8px; color: #6b7280; margin-top: 1px; }
-    table { width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed; }
-    th { text-align: right; padding: 5px 4px; color: #6b7280; border-bottom: 2px solid #e2e5ed; font-weight: 600; white-space: nowrap; }
+    table { width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed; max-width: 100%; }
+    th { text-align: right; padding: 5px 4px; color: #6b7280; border-bottom: 2px solid #e2e5ed; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     th:first-child { text-align: left; }
     /* nowrap keeps "−HK$425,300" on ONE line — without it the minus sign wraps
        onto the previous row and the figure reads as a positive number. */
-    td { padding: 4px 4px; border-bottom: 1px solid #e2e5ed; text-align: right; white-space: nowrap; line-height: 1.25; }
-    td:first-child { text-align: left; font-weight: 600; white-space: normal; word-break: break-word; }
-    /* Return & Income table: give the name column room, keep numeric columns tight
-       and equal so no figure has to wrap. */
-    .ri-table { table-layout: fixed; font-size: 9px; }
-    .ri-table th, .ri-table td { padding: 3px 3px; }
-    .ri-table col.c-name { width: 19%; }
-    .ri-table col.c-num  { width: 9%; }
-    .ri-table col.c-amt  { width: 13%; }
+    td { padding: 4px 4px; border-bottom: 1px solid #e2e5ed; text-align: right; white-space: nowrap; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; }
+    /* Label column may wrap (long descriptions); numeric columns never do. */
+    td:first-child { text-align: left; font-weight: 600; white-space: normal; word-break: break-word; overflow: visible; }
+    /* Return & Income table: 9 columns must fit the A4 column width, so shrink
+       the font and padding and let the asset-name column wrap instead of the
+       numbers. Percentages get the narrowest tracks. */
+    .ri-table { table-layout: fixed; font-size: 8px; width: 100%; }
+    .ri-table th, .ri-table td { padding: 3px 2px; }
+    .ri-table th:first-child, .ri-table td:first-child { font-size: 8px; }
+    .ri-table col.c-name { width: 17%; }
+    .ri-table col.c-num  { width: 8.5%; }
+    .ri-table col.c-amt  { width: 14.5%; }
     .total { background: #eef7f2; font-weight: 800; }
     .alloc-bar { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
     .alloc-bar .dot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; display: inline-block; }
@@ -1075,8 +1078,10 @@ function generatePdf() {
         // Show a single figure when both target portfolios carry the same fee;
         // otherwise a range. nbsp inside each figure keeps the minus attached.
         const one = v => `<span style="white-space:nowrap">−${cur}${fmt(v,0)}</span>`;
-        const val = (hi - lo) < 1 ? one(hi) : `${one(lo)} ~ ${one(hi)}`;
-        return `<tr><td>${isZH?'一次性費用（開倉扣除）':'One-off Fee (deducted upfront)'}</td><td style="color:#c42b1c">${val}</td></tr>`;
+        // Two portfolios can carry different fees. Show one figure if they match,
+        // otherwise stack them so neither gets squeezed/ellipsised in the cell.
+        const val = (hi - lo) < 1 ? one(hi) : `${one(lo)}<br>~ ${one(hi)}`;
+        return `<tr><td>${isZH?'一次性費用（開倉扣除）':'One-off Fee (deducted upfront)'}</td><td style="color:#c42b1c;white-space:normal">${val}</td></tr>`;
       })() : ''}
       <tr><td>${isZH?'投資年期':'Investment Tenor'}</td><td>${tenor} ${isZH?'年':'Years'}</td></tr>
       <tr><td>${isZH?'目標年回報 (%)':'Target Annual Return (%)'}</td><td>${(getTarget()*100).toFixed(2)}%</td></tr>
