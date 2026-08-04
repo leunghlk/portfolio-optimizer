@@ -53,6 +53,14 @@
     /* Metrics table tooltips: avoid bottom clipping by showing above inside table cells */
     .results-table .tip .tip-text { bottom: auto; top: calc(100% + 6px); left: 50%; transform: translateX(-50%); max-width: 260px; }
     .results-table .tip .tip-text::after { top: auto; bottom: 100%; left: 50%; transform: translateX(-50%); border-top-color: transparent; border-bottom-color: #1a1d28; }
+    /* Flip tooltips that would overflow the right edge of the viewport so they
+       stay fully readable (client-facing requirement: never clip a tooltip). */
+    .tip.tip-flip .tip-text { left: auto; right: 0; transform: none; }
+    .tip.tip-flip .tip-text::after { left: auto; right: 10px; transform: none; }
+    .results-table .tip.tip-flip .tip-text { left: auto; right: 0; transform: none; }
+    .results-table .tip.tip-flip .tip-text::after { left: auto; right: 10px; transform: none; }
+    .kpi-card .tip.tip-flip .tip-text { left: auto; right: 0; }
+    .kpi-card .tip.tip-flip .tip-text::after { left: auto; right: 10px; }
     /* Asset table */
     .asset-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: auto; }
     .asset-table th { text-align: left; padding: 6px 3px; color: var(--text-dim); font-weight: 600; font-size: 10px; border-bottom: 2px solid var(--border); white-space: nowrap; }
@@ -60,11 +68,18 @@
     .asset-table input { background: var(--panel); border: 1px solid transparent; border-radius: 6px; color: var(--text); padding: 4px 5px; font-size: 12px; width: 100%; }
     .asset-table input:hover { border-color: var(--border); }
     .asset-table input:focus { border-color: var(--accent); outline: none; }
-    .asset-table .col-name { min-width: 88px; }
+    .asset-table .col-name { min-width: 80px; }
+    .asset-table .col-num { width: 46px; }
+    .asset-table .col-fee { width: 54px; }
+    .asset-table .col-fee input {
+      color: #b45309; font-weight: 600;
+      border-color: rgba(180,83,9,.35); background: rgba(217,119,6,.05);
+      -moz-appearance: textfield; appearance: textfield;
+    }
+    /* Values like "0.5" / "12.5" must not be clipped by the number stepper */
+    .asset-table .col-fee input::-webkit-outer-spin-button,
+    .asset-table .col-fee input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     .asset-table .col-name input { font-weight: 500; }
-    .asset-table .col-num { width: 48px; }
-    .asset-table .col-fee { width: 48px; }
-    .asset-table .col-fee input { color: #b45309; font-weight: 600; }
     .asset-table .col-lock { width: 34px; text-align: center; }
     .asset-table .col-w { width: 46px; }
     .asset-table .col-rm { width: 24px; text-align: center; }
@@ -451,6 +466,24 @@ const I18N = {
 let LANG = 'en';
 function t(key) { return I18N[LANG][key] || key; }
 function tip(key) { return `<span class="tip">?<span class="tip-text">${t(key)}</span></span>`; }
+
+// Keep tooltips fully on-screen: before a tooltip becomes visible, check whether
+// its centred position would spill past the right edge and, if so, right-align it.
+// Delegated listener so it also covers tips rendered later (KPIs, tables, PDF UI).
+document.addEventListener('mouseover', e => {
+  const tipEl = e.target.closest && e.target.closest('.tip');
+  if (!tipEl) return;
+  const box = tipEl.querySelector('.tip-text');
+  if (!box) return;
+  tipEl.classList.remove('tip-flip');
+  const vw = document.documentElement.clientWidth;
+  const anchor = tipEl.getBoundingClientRect();
+  // offsetWidth is 0 while hidden (visibility:hidden still lays out, but guard anyway)
+  const width = box.offsetWidth || parseFloat(getComputedStyle(box).width) || 240;
+  // Centred layout would put the right edge here:
+  const projectedRight = anchor.left + anchor.width / 2 + width / 2;
+  if (projectedRight > vw - 8) tipEl.classList.add('tip-flip');
+}, true);
 
 function setLang(lang) {
   LANG = lang;
