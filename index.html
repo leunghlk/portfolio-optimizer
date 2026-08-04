@@ -929,42 +929,63 @@ function renderPdfReturnIncome(w, mu, cov, amount, tenor, rf, isZH) {
   const hasFee = fees.some(f => f > 1e-12);
   const d = portfolioDetail(w, mu, cov, state.assets.map(a=>a.yield/100), amount, tenor, rf, fees);
   const cur = curSym();
-  const fmt = (n,dd=0) => n.toLocaleString('en-US',{minimumFractionDigits:dd,maximumFractionDigits:dd});
+  const cf = (n, dec) => pdfMoney(n, cur, dec);   // auto-scaled to the proposal's unit
   let totFee = 0, totNet = 0, totInc = 0;
   const rows = state.assets.map((a,i) => {
     const wi=w[i]||0, amt=amount*wi, f=fees[i], feeAmt=amt*f, netAmt=amt-feeAmt;
     const inc=netAmt*(a.yield/100), fv=netAmt*Math.pow(1+a.er/100,tenor);
     totFee+=feeAmt; totNet+=netAmt; totInc+=inc;
-    const feeTd = hasFee ? `<td class="neg">${f>0?'−'+cur+fmt(feeAmt,0):'—'}</td><td>${cur}${fmt(netAmt,0)}</td>` : '';
-    return `<tr><td>${a.name}</td><td>${(wi*100).toFixed(1)}%</td><td>${a.er.toFixed(1)}%</td><td>${a.yield.toFixed(1)}%</td><td>${cur}${fmt(amt,0)}</td>${feeTd}<td class="pos">${cur}${fmt(inc,0)}</td><td class="pos">${cur}${fmt(fv,0)}</td></tr>`;
+    const feeTd = hasFee ? `<td class="neg">${f>0?cf(-feeAmt):'—'}</td><td>${cf(netAmt)}</td>` : '';
+    return `<tr><td>${a.name}</td><td>${(wi*100).toFixed(1)}%</td><td>${a.er.toFixed(1)}%</td><td>${a.yield.toFixed(1)}%</td><td>${cf(amt)}</td>${feeTd}<td class="pos">${cf(inc)}</td><td class="pos">${cf(fv)}</td></tr>`;
   }).join('');
   const feeTh = hasFee ? `<th>${isZH?'費用':'Fee'}</th><th>${isZH?'淨投資':'Net Inv.'}</th>` : '';
-  const feeTotTd = hasFee ? `<td class="neg">−${cur}${fmt(totFee,0)}</td><td>${cur}${fmt(totNet,0)}</td>` : '';
+  const feeTotTd = hasFee ? `<td class="neg">${cf(-totFee)}</td><td>${cf(totNet)}</td>` : '';
   // Explicit column widths so every figure (incl. "−HK$425,300") fits on one line.
   const feeCols = hasFee ? '<col class="c-amt"><col class="c-amt">' : '';
   const colgroup = `<colgroup><col class="c-name"><col class="c-num"><col class="c-num"><col class="c-num"><col class="c-amt">${feeCols}<col class="c-amt"><col class="c-amt"></colgroup>`;
   return `<table class="ri-table">
     ${colgroup}
-    <thead><tr><th>${isZH?'資產':'Asset'}</th><th>${isZH?'權重':'Weight'}</th><th>E(R)</th><th>${isZH?'收益率':'Yield'}</th><th>${isZH?'金額':'Amount'}</th>${feeTh}<th>${isZH?'年收入':'Ann. Income'}</th><th>${tenor}Y FV</th></tr></thead>
+    <thead><tr><th>${isZH?'資產':'Asset'}</th><th>${isZH?'權重':'Weight'}</th><th>E(R)</th><th>${isZH?'收益率':'Yield'}</th><th>${isZH?'金額 ('+cur+(_pdfUnit?_pdfUnit.suf:'')+')':'Amount ('+cur+(_pdfUnit?_pdfUnit.suf:'')+')'}</th>${feeTh}<th>${isZH?'年收入':'Ann. Income'}</th><th>${tenor}Y FV</th></tr></thead>
     <tbody>${rows}
-      <tr class="total"><td>${isZH?'投資組合':'PORTFOLIO'}</td><td>100.0%</td><td>${(d.annualReturn*100).toFixed(1)}%</td><td>${(d.annualIncomeYield*100).toFixed(1)}%</td><td>${cur}${fmt(amount,0)}</td>${feeTotTd}<td class="pos">${cur}${fmt(d.annualIncome,0)}</td><td class="pos">${cur}${fmt(d.fv,0)}</td></tr>
+      <tr class="total"><td>${isZH?'投資組合':'PORTFOLIO'}</td><td>100.0%</td><td>${(d.annualReturn*100).toFixed(1)}%</td><td>${(d.annualIncomeYield*100).toFixed(1)}%</td><td>${cf(amount)}</td>${feeTotTd}<td class="pos">${cf(d.annualIncome)}</td><td class="pos">${cf(d.fv)}</td></tr>
     </tbody></table>`;
 }
 
 // Risk metrics table for a specific portfolio weight vector
 function renderPdfRiskMetrics(w, mu, cov, amount, tenor, rf, isZH) {
   const fees = getFees();
+  const hasFee = fees.some(f => f > 1e-12);
   const d = portfolioDetail(w, mu, cov, state.assets.map(a=>a.yield/100), amount, tenor, rf, fees);
   const cur = curSym();
-  const fmt = (n,dd=0) => n.toLocaleString('en-US',{minimumFractionDigits:dd,maximumFractionDigits:dd});
-  // Kathy: drop "費用年化拖累" and "1年 95% VaR" from the PDF risk table.
-  // Fee drag is already implicit in the net E(R); 95% VaR duplicates the 99% figure's message.
+  const cf = (n, dec) => pdfMoney(n, cur, dec);
+  // Kathy: now WITHOUT 1年 99% VaR (removed); WITH the one-off fee row.
+  const feeRow = hasFee
+    ? `<tr><td>${isZH?'一次性費用（開倉扣除）':'One-off Fee (deducted upfront)'}</td><td class="neg">${cf(-d.feeAmount)} <span style="color:#6b7280;font-size:9px">(${(d.feeRate*100).toFixed(2)}% ${isZH?'· 開倉時扣除':'· upfront'})</span></td></tr>`
+    : '';
   return `<table>
     <tr><td>${isZH?'夏普比率':'Sharpe Ratio'}</td><td><strong style="color:#007A3D">${d.sharpe.toFixed(3)}</strong></td></tr>
-    <tr><td>${isZH?'1年 99% VaR':'1-Year 99% VaR'}</td><td class="neg">${cur}${fmt(d.var99Amount,0)} <span style="color:#6b7280;font-size:9px">(${isZH?'1% 機率至少損失此金額':'1% chance of losing at least this'})</span></td></tr>
+    ${feeRow}
     <tr><td>${isZH?tenor+'年估計最大回撤':'Est. Max Drawdown ('+tenor+'Y)'} </td><td class="neg">${(d.estMaxDD*100).toFixed(1)}% <span style="color:#6b7280;font-size:9px">(${isZH?'從高位至低位最大跌幅':'peak-to-trough decline'})</span></td></tr>
     <tr><td>${isZH?'分散比率':'Diversification Ratio'}</td><td><strong style="color:#007A3D">${d.diversificationRatio.toFixed(2)}×</strong></td></tr>
   </table>`;
+}
+
+// ── PDF money formatter: auto-scale every figure to ONE unit (K / M / B) ──
+// chosen from the portfolio size, so the 9-column Return&Income table never
+// overflows. e.g. $50,000,000 portfolio → all figures in $M ($17.5M not $17,470,906).
+let _pdfUnit = null;
+function scaleUnit(a) {
+  a = Math.abs(a) || 1;
+  if (a >= 1e9) return { div: 1e9, suf: 'B' };
+  if (a >= 1e6) return { div: 1e6, suf: 'M' };
+  if (a >= 1e3) return { div: 1e3, suf: 'K' };
+  return { div: 1, suf: '' };
+}
+function pdfMoney(n, cur, dec) {
+  const u = _pdfUnit || scaleUnit(Math.abs(n) || 1);
+  const v = n / u.div;
+  const d = (dec != null) ? dec : (Math.abs(v) < 10 ? 2 : Math.abs(v) < 100 ? 1 : 0);
+  return cur + (v < 0 ? '−' : '') + Math.abs(v).toFixed(d) + u.suf;
 }
 
 function generatePdf() {
@@ -977,6 +998,10 @@ function generatePdf() {
   const rf = getRf();
   const fmt = (n,d=2) => n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
   const isZH = LANG === 'zh';
+  // Choose ONE display unit for the whole proposal from the portfolio size.
+  _pdfUnit = scaleUnit(amount);
+  const CUR = cur;
+  const curFmt = (n, dec) => pdfMoney(n, CUR, dec);
 
   // Sanitize covariance (add tiny diagonal jitter) so Σ stays invertible even
   // if a user enters a degenerate input (e.g. an asset with σ=0, or perfectly
@@ -1070,19 +1095,8 @@ function generatePdf() {
     <h2>${isZH?'1. 客戶資料':'1. Client Profile'}</h2>
     <table>
       <tr><td>${isZH?'貨幣':'Currency'}</td><td>${document.getElementById('currency').value}</td></tr>
-      <tr><td>${isZH?'投資金額':'Investment Amount'}</td><td>${cur}${fmt(amount,0)}</td></tr>
-      ${hasFee ? (() => {
-        const feeMax = amount*state.assets.reduce((s,a,i)=>s+(wMax[i]||0)*fees[i],0);
-        const feeMin = amount*state.assets.reduce((s,a,i)=>s+(wMin[i]||0)*fees[i],0);
-        const lo = Math.min(feeMax,feeMin), hi = Math.max(feeMax,feeMin);
-        // Show a single figure when both target portfolios carry the same fee;
-        // otherwise a range. nbsp inside each figure keeps the minus attached.
-        const one = v => `<span style="white-space:nowrap">−${cur}${fmt(v,0)}</span>`;
-        // Two portfolios can carry different fees. Show one figure if they match,
-        // otherwise stack them so neither gets squeezed/ellipsised in the cell.
-        const val = (hi - lo) < 1 ? one(hi) : `${one(lo)}<br>~ ${one(hi)}`;
-        return `<tr><td>${isZH?'一次性費用（開倉扣除）':'One-off Fee (deducted upfront)'}</td><td style="color:#c42b1c;white-space:normal">${val}</td></tr>`;
-      })() : ''}
+      <tr><td>${isZH?'投資金額':'Investment Amount'}</td><td>${curFmt(amount)}</td></tr>
+      ${''/* fee row intentionally removed from Client Profile per Kathy 2026-08-04 — it now lives in the per-portfolio Risk Metrics section */}
       <tr><td>${isZH?'投資年期':'Investment Tenor'}</td><td>${tenor} ${isZH?'年':'Years'}</td></tr>
       <tr><td>${isZH?'目標年回報 (%)':'Target Annual Return (%)'}</td><td>${(getTarget()*100).toFixed(2)}%</td></tr>
       <tr><td>${isZH?'風險承受度 (1-10，10為最保守)':'Risk Tolerance (1-10, 10=most conservative)'}</td><td>${getLambda()}</td></tr>
