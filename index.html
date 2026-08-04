@@ -1042,12 +1042,12 @@ function generatePdf() {
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
   <title>${clientName} — ${isZH?'投資組合建議書':'Portfolio Proposal'}</title>
   <style>
-    @page { size: A4; margin: 12mm; }
+    @page { size: A4; margin: 10mm; }
     /* Hide the browser's auto print header/footer (e.g. "about:srcdoc" URL,
        page numbers) so the saved PDF shows ONLY our content. */
-    @page :first { margin: 12mm; }
+    @page :first { margin: 10mm; }
     @media print {
-      @page { margin: 12mm; }
+      @page { margin: 10mm; }
       head, title, link, meta { display: none !important; }
     }
     /* CRITICAL: make the PRINTED/SAVED version identical to the preview.
@@ -1056,59 +1056,56 @@ function generatePdf() {
        saved PDF looks blank. Force exact rendering + keep backgrounds. */
     * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     html, body { height: auto !important; }
-    body { font-family: -apple-system, 'Helvetica Neue', sans-serif; color: #1a1d28; font-size: 10px; line-height: 1.3; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .header { text-align:center; padding: 8px 0; border-bottom: 3px solid #007A3D; margin-bottom: 10px; }
-    .header h1 { font-size: 17px; color: #007A3D; margin-bottom: 1px; }
-    .header .client { font-size: 13px; font-weight: 600; }
-    .header .date { font-size: 9px; color: #6b7280; }
-    .section { margin-bottom: 9px; }
-    .section > h2 { font-size: 12px; color: #007A3D; border-bottom: 1px solid #e2e5ed; padding-bottom: 3px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.3px; }
+    body { font-family: -apple-system, 'Helvetica Neue', sans-serif; color: #1a1d28; font-size: 9px; line-height: 1.25; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .header { text-align:center; padding: 6px 0; border-bottom: 3px solid #007A3D; margin-bottom: 8px; }
+    .header h1 { font-size: 16px; color: #007A3D; margin-bottom: 1px; }
+    .header .client { font-size: 12px; font-weight: 600; }
+    .header .date { font-size: 8px; color: #6b7280; }
+    .section { margin-bottom: 6px; }
+    .section > h2 { font-size: 11px; color: #007A3D; border-bottom: 1px solid #e2e5ed; padding-bottom: 2px; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.3px; }
     .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .two-col .col { border: 1px solid #e2e5ed; border-radius: 8px; padding: 8px; }
-    .two-col .col-title { font-size: 10px; font-weight: 700; color: #007A3D; text-align: center; margin-bottom: 7px; padding-bottom: 4px; border-bottom: 1px dashed #cdd3df; }
-    .two-col .col h3 { font-size: 10px; color: #374151; margin: 8px 0 4px; border-bottom: 1px solid #eef0f4; padding-bottom: 2px; }
-    .card-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 7px; }
-    .card-alloc { display: flex; flex-direction: column; gap: 3px; margin-top: 3px; }
-    .kpi-box { background: #f5f6fa; border-radius: 6px; padding: 6px 4px; text-align: center; }
-    .kpi-box .label { font-size: 7.5px; color: #6b7280; text-transform: uppercase; font-weight: 600; }
-    .kpi-box .value { font-size: 13px; font-weight: 800; margin-top: 1px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .two-col .col { border: 1px solid #e2e5ed; border-radius: 8px; padding: 6px; }
+    .two-col .col-title { font-size: 9.5px; font-weight: 700; color: #007A3D; text-align: center; margin-bottom: 5px; padding-bottom: 3px; border-bottom: 1px dashed #cdd3df; }
+    .two-col .col h3 { font-size: 9.5px; color: #374151; margin: 6px 0 3px; border-bottom: 1px solid #eef0f4; padding-bottom: 2px; }
+    .card-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: 5px; }
+    .card-alloc { display: flex; flex-direction: column; gap: 2px; margin-top: 2px; }
+    .kpi-box { background: #f5f6fa; border-radius: 6px; padding: 5px 3px; text-align: center; }
+    .kpi-box .label { font-size: 7px; color: #6b7280; text-transform: uppercase; font-weight: 600; }
+    .kpi-box .value { font-size: 12px; font-weight: 800; margin-top: 1px; }
     .kpi-box .value.green { color: #007A3D; } .kpi-box .value.accent { color: #007A3D; } .kpi-box .value.red { color: #c42b1c; }
-    .kpi-box .sub { font-size: 7px; color: #6b7280; margin-top: 1px; }
-    /* Client Profile table: fixed layout WITH an explicit colgroup so the
-       label column keeps a sane 42% width (auto layout let the long label
-       collapse the column to ~4.5mm and wrap into dozens of lines). */
-    .profile-table { table-layout: fixed; width: 100%; font-size: 9px; }
+    .kpi-box .sub { font-size: 6.5px; color: #6b7280; margin-top: 1px; }
+    .profile-table { table-layout: fixed; width: 100%; font-size: 8.5px; }
     .profile-table col.c-label { width: 42%; }
     .profile-table col.c-val { width: 58%; }
     .profile-table td:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .profile-table td { padding: 2px 4px; }
-    table { width: 100%; border-collapse: collapse; font-size: 9px; table-layout: fixed; max-width: 100%; }
-    th { text-align: right; padding: 4px 3px; color: #6b7280; border-bottom: 2px solid #e2e5ed; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    table { width: 100%; border-collapse: collapse; font-size: 8.5px; table-layout: fixed; max-width: 100%; }
+    th { text-align: right; padding: 3px 3px; color: #6b7280; border-bottom: 2px solid #e2e5ed; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     th:first-child { text-align: left; }
     /* nowrap keeps "−HK$425,300" on ONE line — without it the minus sign wraps
        onto the previous row and the figure reads as a positive number. */
-    td { padding: 3px 3px; border-bottom: 1px solid #e2e5ed; text-align: right; white-space: nowrap; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; }
+    td { padding: 2px 3px; border-bottom: 1px solid #e2e5ed; text-align: right; white-space: nowrap; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; }
     /* Label column may wrap (long descriptions); numeric columns never do. */
     td:first-child { text-align: left; font-weight: 600; white-space: normal; word-break: break-word; overflow: visible; }
     /* Return & Income table: 9 columns must fit the A4 column width, so shrink
        the font and padding and let the asset-name column wrap instead of the
        numbers. Percentages get the narrowest tracks. */
-    .ri-table { table-layout: fixed; font-size: 7.5px; width: 100%; }
-    .ri-table th, .ri-table td { padding: 2px 2px; white-space: nowrap; overflow: visible; text-overflow: clip; }
-    .ri-table th:first-child, .ri-table td:first-child { font-size: 7.5px; overflow: visible; }
+    .ri-table { table-layout: fixed; font-size: 7px; width: 100%; }
+    .ri-table th, .ri-table td { padding: 2px 1px; white-space: nowrap; overflow: visible; text-overflow: clip; }
+    .ri-table th:first-child, .ri-table td:first-child { font-size: 7px; overflow: visible; }
     .ri-table col.c-name { width: 16%; }
     .ri-table col.c-num  { width: 9.5%; }
     .ri-table col.c-amt  { width: 14%; }
     .total { background: #eef7f2; font-weight: 800; }
-    .alloc-bar { display: flex; align-items: center; gap: 5px; margin: 3px 0; }
-    .alloc-bar .dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; display: inline-block; }
-    .alloc-bar .name { width: 95px; font-weight: 600; font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .alloc-bar .bar { flex: 1; height: 16px; background: #f0f2f5; border-radius: 4px; overflow: hidden; }
+    .alloc-bar { display: flex; align-items: center; gap: 4px; margin: 2px 0; }
+    .alloc-bar .dot { width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto; display: inline-block; }
+    .alloc-bar .name { width: 85px; font-weight: 600; font-size: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .alloc-bar .bar { flex: 1; height: 14px; background: #f0f2f5; border-radius: 4px; overflow: hidden; }
     .alloc-bar .fill { height: 100%; border-radius: 4px; }
-    .alloc-bar .pct { width: 46px; text-align: right; font-weight: 700; font-size: 10px; }
-    .frontier-img { width: 100%; max-width: 190px; height: auto; display: block; margin: 0 auto; page-break-inside: avoid; }
-    .footer { text-align: center; font-size: 8px; color: #6b7280; margin-top: 8px; border-top: 1px solid #e2e5ed; padding-top: 6px; line-height: 1.3; }
+    .alloc-bar .pct { width: 40px; text-align: right; font-weight: 700; font-size: 9px; }
+    .frontier-img { width: 100%; max-width: 150px; height: auto; display: block; margin: 0 auto; page-break-inside: avoid; }
+    .footer { text-align: center; font-size: 7.5px; color: #6b7280; margin-top: 6px; border-top: 1px solid #e2e5ed; padding-top: 4px; line-height: 1.25; }
     .pos { color: #007A3D; } .neg { color: #dc2626; }
   </style></head><body>
   <div class="header">
