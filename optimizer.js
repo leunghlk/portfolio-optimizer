@@ -86,6 +86,58 @@ function buildCovMatrix(stdDevs, corr) {
 }
 
 // ─────────────────────────────────────────────
+//  ONE-OFF (UPFRONT) FEES
+// ─────────────────────────────────────────────
+
+/**
+ * Net expected returns after a ONE-OFF (upfront) fee, amortized over the horizon.
+ *
+ * A one-off fee f_i charged on the amount allocated to asset i means only
+ * (1 − f_i) of that capital is actually invested, so terminal wealth per unit
+ * ALLOCATED is:      (1 − f_i) × (1 + μ_i)^T
+ * The equivalent annualized net return is therefore:
+ *      μ_net_i = (1 − f_i)^(1/T) × (1 + μ_i) − 1
+ *
+ * This identity is EXACT at the asset level (no approximation):
+ *      (1 + μ_net_i)^T  ≡  (1 − f_i)(1 + μ_i)^T
+ *
+ * Feeding μ_net into the optimizer makes the whole MVO engine fee-aware, so a
+ * high-load asset is correctly penalised instead of being over-allocated.
+ * Volatility σ is unchanged — a certain upfront charge shifts the mean, not the
+ * dispersion of market returns.
+ *
+ * @param mu        Gross expected returns (decimal, annual)
+ * @param feeRates  One-off fee per asset (decimal, e.g. 0.03 = 3%)
+ * @param years     Investment horizon T (years)
+ */
+function netExpectedReturns(mu, feeRates, years) {
+  const T = Math.max(1e-9, isFinite(years) ? years : 1);
+  return mu.map((m, i) => {
+    const raw = (feeRates && isFinite(feeRates[i])) ? feeRates[i] : 0;
+    const f = Math.min(1, Math.max(0, raw));
+    const g = isFinite(m) ? m : 0;
+    // Short-circuit at f=0 so a zero-fee portfolio returns the EXACT gross μ.
+    // Math.pow(1, 1/T) can leave a ~1e-17 residue that surfaces as "−0.00%" drag.
+    if (f === 0) return g;
+    return Math.pow(1 - f, 1 / T) * (1 + g) - 1;
+  });
+}
+
+/**
+ * Effective yields after a one-off fee: income is earned only on the capital
+ * that actually gets invested, i.e. (1 − f_i) of the allocation.
+ * Returned as yield-on-GROSS-allocation so that
+ *      Σ w_i × yNet_i × Amount  ≡  Σ (net amount in asset i) × y_i
+ */
+function netYields(yields, feeRates) {
+  return yields.map((y, i) => {
+    const raw = (feeRates && isFinite(feeRates[i])) ? feeRates[i] : 0;
+    const f = Math.min(1, Math.max(0, raw));
+    return (isFinite(y) ? y : 0) * (1 - f);
+  });
+}
+
+// ─────────────────────────────────────────────
 //  PORTFOLIO METRICS  (CFA Level I)
 // ─────────────────────────────────────────────
 
@@ -563,21 +615,62 @@ function goalsBasedAnalysis(pv, pmt, goalAmount, years, mu, cov, minW, maxW) {
 /**
  * Compute detailed portfolio metrics for the results table.
  * @param w        Weights
- * @param mu       Expected returns (annual, decimal)
- * @param yields   Current yields per asset (annual, decimal) — income component
- * @param amount   Investment amount
+ * @param mu       GROSS expected returns (annual, decimal) — before fees
+ * @param yields   GROSS yields per asset (annual, decimal) — income component
+ * @param amount   Investment amount (gross, before the one-off fee)
  * @param years    Tenor
- * @param currency Currency code
+ * @param rf       Risk-free rate
+ * @param feeRates One-off (upfront) fee per asset (decimal). Optional; omit/0 = no fee.
+ *
+ * Fee convention: a ONE-OFF charge deducted from the client's portfolio at
+ * inception. Only (1 − f_i) of each sleeve is actually invested, so:
+ *   fee$          = Amount × Σ w_i f_i
+ *   net invested  = Amount − fee$
+ *   net return    = Σ w_i × [(1−f_i)^(1/T)(1+μ_i) − 1]   (exact amortization)
+ * With feeRates all zero every output is identical to the pre-fee version.
  */
-function portfolioDetail(w, mu, cov, yields, amount, years, rf) {
-  const annualReturn = isFinite(portfolioReturn(w, mu)) ? portfolioReturn(w, mu) : 0;
-  const annualIncomeYield = isFinite(Mat.dot(w, yields)) ? Mat.dot(w, yields) : 0;
+function portfolioDetail(w, mu, cov, yields, amount, years, rf, feeRates) {
+  const n = w.length;
+  const fees = Array.from({length: n}, (_, i) => {
+    const raw = (feeRates && isFinite(feeRates[i])) ? feeRates[i] : 0;
+    return Math.min(1, Math.max(0, raw));
+  });
+
+  // ── One-off fee, deducted upfront from the portfolio ──
+  const feeRate = isFinite(Mat.dot(w, fees)) ? Mat.dot(w, fees) : 0;  // weighted avg fee
+  const feeAmount = amount * feeRate;
+  const netAmount = amount - feeAmount;
+
+  // Gross (pre-fee) market return — one-period E(Rp) = Σwᵢμᵢ (standard MVO).
+  const grossAnnualReturn = isFinite(portfolioReturn(w, mu)) ? portfolioReturn(w, mu) : 0;
+
+  // Net (post-fee) expected annual return: the one-off fee amortized over the
+  // tenor, EXACT per asset — (1+μnetᵢ)^T ≡ (1−fᵢ)(1+μᵢ)^T. This is the number
+  // the optimizer maximises, so the KPI and the allocation always agree.
+  const muNet = netExpectedReturns(mu, fees, years);
+  const annualReturn = isFinite(portfolioReturn(w, muNet)) ? portfolioReturn(w, muNet) : 0;
+  const feeDrag = grossAnnualReturn - annualReturn;   // = 0 exactly when fees = 0
+
+  // Future value — each sleeve invests its allocation net of its own one-off fee
+  // and compounds at that asset's return (buy-and-hold):
+  //      FV = Σ wᵢ × Amount × (1 − fᵢ) × (1 + μᵢ)^T
+  // Using the sleeve-level sum (not Amount×(1+E(R))^T) guarantees the per-asset
+  // rows in the metrics table add up EXACTLY to the portfolio total row.
+  let fv = 0;
+  for (let i = 0; i < n; i++) {
+    const wi = isFinite(w[i]) ? w[i] : 0;
+    const mi = isFinite(mu[i]) ? mu[i] : 0;
+    fv += wi * amount * (1 - fees[i]) * Math.pow(1 + mi, years);
+  }
+  if (!isFinite(fv)) fv = 0;
+
+  // Income is earned only on the capital actually invested
+  const yNet = netYields(yields, fees);
+  const annualIncomeYield = isFinite(Mat.dot(w, yNet)) ? Mat.dot(w, yNet) : 0;  // on GROSS amount
   const capitalGrowthReturn = annualReturn - annualIncomeYield;
   const stdDev = isFinite(portfolioStdDev(w, cov)) ? portfolioStdDev(w, cov) : 0;
   const sharpe = stdDev > 1e-10 ? (annualReturn - rf) / stdDev : 0;
 
-  // Future value
-  const fv = amount * Math.pow(1 + annualReturn, years);
   const totalGain = fv - amount;
   const totalReturnPct = (fv / amount - 1);
 
@@ -586,15 +679,16 @@ function portfolioDetail(w, mu, cov, yields, amount, years, rf) {
   const totalIncome = annualIncome * years;
 
   // Downside risk metrics (CFA Level III)
-  // 95% VaR (parametric, 1-year):
-  //   Worst-case loss at 95% confidence = (1.645σ_p − μ_p) × Amount
+  // 95% VaR (parametric, 1-year) on the capital actually INVESTED (net of the
+  // one-off fee, which is a certain cost, not a random market loss):
+  //   Worst-case loss at 95% confidence = (1.645σ_p − μ_gross) × Net Invested
   //   i.e. "There is a 5% chance the portfolio loses at least this much in 1 year."
   //   If the expression is negative, the portfolio is very unlikely to lose money → VaR = 0
-  const var95Raw = (1.645 * stdDev - annualReturn);
-  const var95Amount = Math.max(0, var95Raw * amount);
+  const var95Raw = (1.645 * stdDev - grossAnnualReturn);
+  const var95Amount = Math.max(0, var95Raw * netAmount);
   // 99% VaR: 2.326σ
-  const var99Raw = (2.326 * stdDev - annualReturn);
-  const var99Amount = Math.max(0, var99Raw * amount);
+  const var99Raw = (2.326 * stdDev - grossAnnualReturn);
+  const var99Amount = Math.max(0, var99Raw * netAmount);
 
   // Max drawdown estimate (throughout the tenor, not just 1Y)
   // Approximation: peak-to-trough decline over the investment horizon.
@@ -608,13 +702,18 @@ function portfolioDetail(w, mu, cov, yields, amount, years, rf) {
   const diversificationRatio = stdDev > 1e-10 ? weightedAvgSigma / stdDev : 1;
 
   return {
-    annualReturn,          // E(Rp) expected annual return
-    annualIncomeYield,     // portfolio yield (dividend + coupon income)
+    annualReturn,          // E(Rp) NET of the one-off fee (amortized over tenor)
+    grossAnnualReturn,     // E(Rp) before fees
+    feeRate,               // weighted-average one-off fee (decimal)
+    feeAmount,             // one-off fee in currency, deducted upfront
+    netAmount,             // capital actually invested = amount − feeAmount
+    feeDrag,               // annualized return give-up caused by the fee
+    annualIncomeYield,     // portfolio yield net of fee drag (on gross amount)
     capitalGrowthReturn,   // price appreciation component
     stdDev,                // portfolio std dev
-    sharpe,                // Sharpe ratio
-    fv,                    // future value at horizon
-    totalGain,             // absolute gain
+    sharpe,                // Sharpe ratio (net return basis)
+    fv,                    // future value at horizon (after fee)
+    totalGain,             // absolute gain vs gross amount
     totalReturnPct,        // cumulative return over horizon
     annualIncome,          // yearly income in currency
     totalIncome,           // total income over horizon
@@ -657,6 +756,7 @@ function rebalancingCorridors(w, cov, baseBand = 0.10) {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     Mat, buildCovMatrix,
+    netExpectedReturns, netYields,
     portfolioReturn, portfolioVariance, portfolioStdDev, sharpeRatio, utility,
     marginalContributionToRisk, componentContributionToRisk,
     minVarianceUnconstrained, maxSharpeUnconstrained, targetReturnUnconstrained,

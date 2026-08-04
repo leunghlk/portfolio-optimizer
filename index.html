@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Portfolio Optimization Dashboard</title>
-  <script src="optimizer.js?v=20260803c"></script>
+  <script src="optimizer.js?v=20260804-fee"></script>
   <style>
     :root {
       --bg: #f5f6fa; --panel: #ffffff; --panel-2: #f0f2f5; --border: #e2e5ed;
@@ -60,12 +60,14 @@
     .asset-table input { background: var(--panel); border: 1px solid transparent; border-radius: 6px; color: var(--text); padding: 4px 5px; font-size: 12px; width: 100%; }
     .asset-table input:hover { border-color: var(--border); }
     .asset-table input:focus { border-color: var(--accent); outline: none; }
-    .asset-table .col-name { min-width: 120px; }
+    .asset-table .col-name { min-width: 88px; }
     .asset-table .col-name input { font-weight: 500; }
-    .asset-table .col-num { width: 58px; }
-    .asset-table .col-lock { width: 36px; text-align: center; }
-    .asset-table .col-w { width: 52px; }
-    .asset-table .col-rm { width: 28px; text-align: center; }
+    .asset-table .col-num { width: 48px; }
+    .asset-table .col-fee { width: 48px; }
+    .asset-table .col-fee input { color: #b45309; font-weight: 600; }
+    .asset-table .col-lock { width: 34px; text-align: center; }
+    .asset-table .col-w { width: 46px; }
+    .asset-table .col-rm { width: 24px; text-align: center; }
     .lock-btn { background: transparent; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-size: 12px; padding: 2px 6px; color: var(--text-dim); transition: all 0.15s; }
     .lock-btn.locked { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
     .lock-btn:hover { border-color: var(--accent); }
@@ -218,6 +220,7 @@
           <th class="col-num">E(R)%</th>
           <th class="col-num">σ%</th>
           <th class="col-num" data-i18n="yieldCol">Yld%</th>
+          <th class="col-fee" data-i18n="feeCol">Fee%</th>
           <th class="col-lock" data-i18n="lock">Fix</th>
           <th class="col-w">W%</th>
           <th class="col-rm"></th>
@@ -367,8 +370,10 @@ const I18N = {
     exportPdf:'Export PDF', optimize:'Optimize', clientProfile:'Client Profile', amount:'Investment Amount', tenor:'Tenor (Years)',
     targetReturn:'Target Annual Return (%)', rfRate:'Risk-Free Rate (%)', riskTolerance:'Risk Tolerance λ',
     aggressive:'Aggressive', conservative:'Conservative',
-    assetClasses:'Asset Classes', name:'Name', yieldCol:'Yld%', lock:'Fix', addAsset:'+ Add Asset Class',
-    lockHint:'💡 Click 🔒 to lock an asset\'s weight. Optimizer calculates the best % for remaining unlocked assets. Default max 60% prevents over-concentration.',
+    assetClasses:'Asset Classes', name:'Name', yieldCol:'Yld%', feeCol:'Fee%', lock:'Fix', addAsset:'+ Add Asset Class',
+    feeAmtCol:'Fee $', netAmtCol:'Net Invested', feeTotalLbl:'One-off Fee (total)', feeDragLbl:'Fee Drag on Return',
+    kpiFee:'One-off Fee',
+    lockHint:'💡 Click 🔒 to lock an asset\'s weight. Optimizer calculates the best % for remaining unlocked assets. Default max 60% prevents over-concentration. Fee% = ONE-OFF upfront charge deducted from the portfolio at inception.',
     constraints:'Constraints', minWeight:'Min Weight per Asset (%)', maxWeight:'Max Weight per Asset (%)',
     optMethod:'Optimization Method',
     m_maxSharpe:'Maximum Sharpe', m_maxSharpe_desc:'Best risk-adjusted return',
@@ -393,6 +398,7 @@ const I18N = {
     tip_sharpe:'Risk-adjusted return. Formula: (Return − Risk-Free Rate) ÷ Risk. Above 1.0 = good, above 2.0 = excellent. Higher is always better.',
     tip_utility:"Investor satisfaction score: U = E(R) − 0.005 × λ × σ². Higher λ = more risk-averse. Higher utility = better fit for this client's risk profile.",
     tip_yield:"Annual income (dividends + coupons) as % of investment. This is cash flow you receive without selling assets.",
+    tip_fee:'ONE-OFF (upfront) fee, charged once at inception and deducted from the client\'s portfolio. Only the remaining capital is invested, so both income and future value are computed on the net amount. Entered as % of the amount allocated to that asset.',
     tip_var95:'95% Value-at-Risk: There is a 5% chance (1-in-20) the portfolio loses AT LEAST this amount in one year. Lower = safer.',
     tip_var99:'99% Value-at-Risk: There is a 1% chance (1-in-100) the portfolio loses AT LEAST this amount in one year.',
     tip_maxdd:'Estimated maximum peak-to-trough decline over the full investment period. E.g. -25% means the portfolio could temporarily drop 25% from its highest point.',
@@ -405,8 +411,10 @@ const I18N = {
     exportPdf:'匯出 PDF', optimize:'最佳化', clientProfile:'客戶資料', amount:'投資金額', tenor:'投資年期',
     targetReturn:'目標年回報 (%)', rfRate:'無風險利率 (%)', riskTolerance:'風險承受度 λ',
     aggressive:'激進', conservative:'保守',
-    assetClasses:'資產類別', name:'名稱', yieldCol:'收益率%', lock:'鎖定', addAsset:'+ 新增資產類別',
-    lockHint:'💡 點擊 🔒 鎖定資產權重。最佳化引擎只計算未鎖定資產的最優比例。預設最高 60% 防止過度集中。',
+    assetClasses:'資產類別', name:'名稱', yieldCol:'收益率%', feeCol:'費用%', lock:'鎖定', addAsset:'+ 新增資產類別',
+    feeAmtCol:'費用金額', netAmtCol:'淨投資額', feeTotalLbl:'一次性費用（總額）', feeDragLbl:'費用對回報的拖累',
+    kpiFee:'一次性費用',
+    lockHint:'💡 點擊 🔒 鎖定資產權重。最佳化引擎只計算未鎖定資產的最優比例。預設最高 60% 防止過度集中。費用% = 一次性前端費用，開倉時從組合扣除。',
     constraints:'約束條件', minWeight:'每項最低權重 (%)', maxWeight:'每項最高權重 (%)',
     optMethod:'最佳化方法',
     m_maxSharpe:'最高夏普比率', m_maxSharpe_desc:'最佳風險調整回報',
@@ -431,6 +439,7 @@ const I18N = {
     tip_sharpe:'風險調整回報。公式：（回報 − 無風險利率）÷ 風險。高於 1.0 = 好，高於 2.0 = 優秀。數值越高越好。',
     tip_utility:'投資者滿意度分數：U = E(R) − 0.005 × λ × σ²。λ 越高 = 越厭惡風險。效用越高 = 越適合此客戶的風險偏好。',
     tip_yield:'年度收入（股息 + 債息）佔投資額的百分比。這是不需賣出資產即可获得的現金流。',
+    tip_fee:'一次性（前端）費用，開倉時一次過從客戶組合中扣除。扣費後餘下的本金才實際投資，因此收入及未來價值均以淨投資額計算。輸入為該資產配置金額的百分比。',
     tip_var95:'95% 風險價值（VaR）：有 5% 機率（二十分之一）投資組合在一年內至少損失此金額。數值越低 = 越安全。',
     tip_var99:'99% 風險價值（VaR）：有 1% 機率（百分之一）投資組合在一年內至少損失此金額。',
     tip_maxdd:'估計在整個投資期內從最高點至最低點的最大跌幅。例如 -25% 表示投資組合可能從高位暫時下跌 25%。',
@@ -456,10 +465,10 @@ function setLang(lang) {
 // ═══════════════════════════════════════════
 let state = {
   assets: [
-    { name:'Equities (Dev.)', er:8.5, sd:15, yield:2.0, locked:false, lockWeight:0 },
-    { name:'Bonds (IG)',      er:4.5, sd:5,  yield:4.2, locked:false, lockWeight:0 },
-    { name:'Gold',            er:5.0, sd:16, yield:0,   locked:false, lockWeight:0 },
-    { name:'Cash',            er:4.0, sd:0.5, yield:4.0, locked:false, lockWeight:0 },
+    { name:'Equities (Dev.)', er:8.5, sd:15, yield:2.0, fee:0, locked:false, lockWeight:0 },
+    { name:'Bonds (IG)',      er:4.5, sd:5,  yield:4.2, fee:0, locked:false, lockWeight:0 },
+    { name:'Gold',            er:5.0, sd:16, yield:0,   fee:0, locked:false, lockWeight:0 },
+    { name:'Cash',            er:4.0, sd:0.5, yield:4.0, fee:0, locked:false, lockWeight:0 },
   ],
   corr: [
     [1.00, 0.10, -0.10, 0.00],
@@ -477,6 +486,10 @@ function getTenor() { return parseInt(document.getElementById('tenor').value) ||
 function getRf() { return parseFloat(document.getElementById('rfRate').value) / 100; }
 function getLambda() { return parseFloat(document.getElementById('riskAversion').value); }
 function getTarget() { return parseFloat(document.getElementById('targetReturn').value) / 100; }
+// One-off fee rates per asset (decimal). Sanitized to [0,1] — a blank/NaN cell = 0.
+function getFees() { return state.assets.map(a => { const f = parseFloat(a.fee); return isFinite(f) ? Math.min(1, Math.max(0, f/100)) : 0; }); }
+// Net (post-one-off-fee) expected returns, amortized over the tenor.
+function getMuNet() { return netExpectedReturns(state.assets.map(a=>a.er/100), getFees(), getTenor()); }
 
 function onAmountInput(el) {
   // Strip commas, reformat with commas
@@ -498,6 +511,7 @@ function renderAssetTable() {
       <td class="col-num"><input type="number" value="${a.er}" step="0.5" onchange="updateAsset(${i},'er',parseFloat(this.value))"></td>
       <td class="col-num"><input type="number" value="${a.sd}" step="0.5" onchange="updateAsset(${i},'sd',parseFloat(this.value))"></td>
       <td class="col-num"><input type="number" value="${a.yield}" step="0.1" onchange="updateAsset(${i},'yield',parseFloat(this.value))"></td>
+      <td class="col-fee"><input type="number" value="${a.fee ?? 0}" step="0.25" min="0" max="100" title="${LANG==='zh'?'一次性費用（開倉時從組合扣除）':'One-off fee, deducted upfront'}" onchange="updateAsset(${i},'fee',parseFloat(this.value))"></td>
       <td class="col-lock"><button class="lock-btn ${a.locked?'locked':''}" onclick="toggleLock(${i})">${a.locked?'🔒':'🔓'}</button></td>
       <td class="col-w">${a.locked?`<input type="number" class="lock-weight-input" value="${(a.lockWeight*100).toFixed(0)}" step="1" min="0" max="100" onchange="updateLockWeight(${i},parseFloat(this.value))">`:'<span style="color:var(--text-dim);font-size:11px;">—</span>'}</td>
       <td class="col-rm"><button class="remove-btn" onclick="removeAsset(${i})">×</button></td>
@@ -509,7 +523,7 @@ function updateLockWeight(i, pct) { state.assets[i].lockWeight = Math.max(0, Mat
 function updateAsset(i, field, val) { state.assets[i][field] = val; recalculate(); }
 function addAsset() {
   const n = state.assets.length;
-  state.assets.push({name:'Asset '+(n+1), er:5, sd:10, yield:2, locked:false, lockWeight:0});
+  state.assets.push({name:'Asset '+(n+1), er:5, sd:10, yield:2, fee:0, locked:false, lockWeight:0});
   for (let row of state.corr) row.push(0.1);
   state.corr.push([...state.corr[0].map(()=>0.1), 1]);
   renderAssetTable(); recalculate();
@@ -538,6 +552,9 @@ function recalculate() {
   const mu = state.assets.map(a=>a.er/100), sigma = state.assets.map(a=>a.sd/100);
   const cov = buildCovMatrix(sigma, state.corr);
   const rf=getRf(), amount=getAmount(), tenor=getTenor(), lambda=getLambda(), target=getTarget();
+  // One-off fees: optimize on NET returns so a high-load asset is correctly penalised.
+  const fees = getFees();
+  const muNet = netExpectedReturns(mu, fees, tenor);
   const globalMin = parseFloat(document.getElementById('minWeight').value)/100;
   const globalMax = parseFloat(document.getElementById('maxWeight').value)/100;
   const minW = state.assets.map(a=>a.locked?a.lockWeight:globalMin);
@@ -548,8 +565,8 @@ function recalculate() {
     return;
   }
   let weights;
-  try { weights = optimizeConstrained(cov, mu, rf, minW, maxW, state.method, target, lambda); }
-  catch(e) { weights = maxSharpeUnconstrained(cov, mu, rf); }
+  try { weights = optimizeConstrained(cov, muNet, rf, minW, maxW, state.method, target, lambda); }
+  catch(e) { weights = maxSharpeUnconstrained(cov, muNet, rf); }
   weights = weights.map(w=>isFinite(w)?Math.max(0,w):0);
   const wsum = weights.reduce((a,b)=>a+b,0);
   if (wsum > 0) weights = weights.map(w=>w/wsum);
@@ -557,31 +574,41 @@ function recalculate() {
   renderKPIs(weights, mu, cov, rf, amount, tenor, lambda);
   renderAllocationSliders();
   renderMetricsTable(weights, mu, cov, amount, tenor, rf);
-  renderRiskBudget(weights, cov, mu, rf);
-  renderGoals(mu, cov, minW, maxW, amount, tenor);
+  renderRiskBudget(weights, cov, muNet, rf);
+  renderGoals(muNet, cov, minW, maxW, amount, tenor);
   renderBL(mu, cov, rf);
-  drawFrontier(cov, mu, rf, minW, maxW, weights);
+  drawFrontier(cov, muNet, rf, minW, maxW, weights);
 }
 
 // ═══════════════════════════════════════════
 //  KPIs (with tooltips)
 // ═══════════════════════════════════════════
 function renderKPIs(w, mu, cov, rf, amount, tenor, lambda) {
-  const er = portfolioReturn(w, mu), sd = portfolioStdDev(w, cov);
-  const sharpe = sd>1e-10 ? (er-rf)/sd : 0;
-  const u = utility(w, mu, cov, lambda);
-  const incomeYield = Mat.dot(w, state.assets.map(a=>a.yield/100));
-  const fv = amount * Math.pow(1+er, tenor);
+  const fees = getFees();
+  const d = portfolioDetail(w, mu, cov, state.assets.map(a=>a.yield/100), amount, tenor, rf, fees);
+  const er = d.annualReturn, sd = d.stdDev;          // er is NET of the one-off fee
+  const sharpe = d.sharpe;
+  const muNet = netExpectedReturns(mu, fees, tenor);
+  const u = utility(w, muNet, cov, lambda);          // utility on net returns
+  const incomeYield = d.annualIncomeYield;
+  const fv = d.fv;
   const cur = curSym();
+  const hasFee = d.feeRate > 1e-12;
   const lockedList = state.assets.filter(a=>a.locked).map(a=>`${a.name.substring(0,6)}:${(a.lockWeight*100).toFixed(0)}%`);
   const kpis = [
-    {label:t('kpiER'), tip:'tip_er', value:(er*100).toFixed(2)+'%', sub:LANG==='zh'?'年度總回報':'Annual total return', color:er>0?'green':'red'},
+    {label:t('kpiER'), tip:'tip_er', value:(er*100).toFixed(2)+'%', sub:hasFee?(LANG==='zh'?`扣費後（費前 ${(d.grossAnnualReturn*100).toFixed(2)}%）`:`Net of fees (gross ${(d.grossAnnualReturn*100).toFixed(2)}%)`):(LANG==='zh'?'年度總回報':'Annual total return'), color:er>0?'green':'red'},
     {label:t('kpiSD'), tip:'tip_sd', value:(sd*100).toFixed(2)+'%', sub:LANG==='zh'?'年化波動率':'Annualized volatility', color:'accent'},
     {label:t('kpiSharpe'), tip:'tip_sharpe', value:sharpe.toFixed(3), sub:LANG==='zh'?'越高越好':'Higher = better', color:sharpe>1?'green':'accent'},
     {label:t('kpiUtility'), tip:'tip_utility', value:u.toFixed(4), sub:`E(R)−0.005×${lambda}×σ²`, color:'accent'},
-    {label:t('kpiIncome'), tip:'tip_yield', value:cur+(amount*incomeYield).toLocaleString('en-US',{maximumFractionDigits:0}), sub:`${LANG==='zh'?'收益率':'Yield'} ${(incomeYield*100).toFixed(2)}%`, color:'green'},
+    {label:t('kpiIncome'), tip:'tip_yield', value:cur+d.annualIncome.toLocaleString('en-US',{maximumFractionDigits:0}), sub:`${LANG==='zh'?'收益率':'Yield'} ${(incomeYield*100).toFixed(2)}%`, color:'green'},
     {label:`${t('kpiFV')} (${tenor}y)`, tip:'', value:cur+fv.toLocaleString('en-US',{maximumFractionDigits:0}), sub:`${LANG==='zh'?'總回報':'Total'} ${((fv/amount-1)*100).toFixed(1)}%`, color:'green'},
   ];
+  // One-off fee card — only shown when a fee is actually charged
+  if (hasFee) kpis.push({
+    label:t('kpiFee'), tip:'tip_fee',
+    value:cur+d.feeAmount.toLocaleString('en-US',{maximumFractionDigits:0}),
+    sub:`${(d.feeRate*100).toFixed(2)}% · ${LANG==='zh'?'淨投資額':'Net invested'} ${cur}${d.netAmount.toLocaleString('en-US',{maximumFractionDigits:0})}`,
+    color:'red'});
   if (lockedList.length > 0) kpis.push({label:LANG==='zh'?'鎖定資產':'Fixed Assets', tip:'', value:lockedList.length+'', sub:lockedList.join(' · '), color:'accent'});
   document.getElementById('kpiRow').innerHTML = kpis.map(k => `
     <div class="kpi-card">
@@ -610,11 +637,12 @@ function updateManualAlloc(i, val) {
   state.weights[i] = val/100;
   const mu = state.assets.map(a=>a.er/100), cov = buildCovMatrix(state.assets.map(a=>a.sd/100), state.corr);
   const rf=getRf(), amount=getAmount(), tenor=getTenor(), lambda=getLambda();
+  const muNet = netExpectedReturns(mu, getFees(), tenor);
   renderKPIs(state.weights, mu, cov, rf, amount, tenor, lambda);
   renderAllocationSliders(); renderMetricsTable(state.weights, mu, cov, amount, tenor, rf);
-  renderRiskBudget(state.weights, cov, mu, rf);
-  const er=portfolioReturn(state.weights,mu), sd=portfolioStdDev(state.weights,cov);
-  drawFrontier(cov, mu, rf, new Array(mu.length).fill(0), new Array(mu.length).fill(1), state.weights, er, sd);
+  renderRiskBudget(state.weights, cov, muNet, rf);
+  const er=portfolioReturn(state.weights,muNet), sd=portfolioStdDev(state.weights,cov);
+  drawFrontier(cov, muNet, rf, new Array(mu.length).fill(0), new Array(mu.length).fill(1), state.weights, er, sd);
 }
 function updateTotalAlloc() {
   const total = state.weights.reduce((a,b)=>a+b,0), pct=(total*100).toFixed(1);
@@ -631,21 +659,32 @@ function resetToOptimal() { state.weights=[...state.optimalWeights]; renderAlloc
 //  METRICS TABLE
 // ═══════════════════════════════════════════
 function renderMetricsTable(w, mu, cov, amount, tenor, rf) {
-  const detail = portfolioDetail(w, mu, cov, state.assets.map(a=>a.yield/100), amount, tenor, rf);
+  const fees = getFees();
+  const hasFee = fees.some(f => f > 1e-12);
+  const detail = portfolioDetail(w, mu, cov, state.assets.map(a=>a.yield/100), amount, tenor, rf, fees);
   const cur = curSym();
   const fmt = (n,d=2) => n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
   const fmtPct = (n,d=2) => (n*100).toFixed(d)+'%';
-  let html = `<thead><tr><th>${t('name')}</th><th>${t('weight')}</th><th>${t('annER')}</th><th>${t('yieldCol')}</th><th>${t('capGrowth')}</th><th>${t('riskCol')}</th><th>${t('amtCol')}</th><th>${t('annIncomeCol')}</th><th>${tenor}Y FV</th></tr></thead><tbody>`;
-  let totW=0,totAmt=0,totInc=0;
+  const feeTh = hasFee ? `<th>${t('feeCol')} ${tip('tip_fee')}</th><th>${t('feeAmtCol')}</th>` : '';
+  let html = `<thead><tr><th>${t('name')}</th><th>${t('weight')}</th><th>${t('annER')}</th><th>${t('yieldCol')}</th><th>${t('capGrowth')}</th><th>${t('riskCol')}</th><th>${t('amtCol')}</th>${feeTh}<th>${hasFee?t('netAmtCol'):t('amtCol')}</th><th>${t('annIncomeCol')}</th><th>${tenor}Y FV</th></tr></thead><tbody>`;
+  let totW=0,totAmt=0,totFee=0,totNet=0,totInc=0;
   state.assets.forEach((a,i) => {
-    const wi=w[i], amt=amount*wi, inc=amt*(a.yield/100), fv=amt*Math.pow(1+a.er/100,tenor);
-    totW+=wi; totAmt+=amt; totInc+=inc;
-    html += `<tr><td><span style="color:${COLORS[i%COLORS.length]}">●</span> ${a.name}${a.locked?' 🔒':''}</td><td>${fmtPct(wi)}</td><td class="${a.er>=0?'pos':'neg'}">${a.er.toFixed(2)}%</td><td>${a.yield.toFixed(2)}%</td><td class="${(a.er-a.yield)>=0?'pos':'neg'}">${(a.er-a.yield).toFixed(2)}%</td><td>${a.sd.toFixed(2)}%</td><td>${cur}${fmt(amt,0)}</td><td class="pos">${cur}${fmt(inc,0)}</td><td class="pos">${cur}${fmt(fv,0)}</td></tr>`;
+    // Per-asset: fee is charged on the allocated amount; only the net is invested.
+    const wi=w[i], amt=amount*wi, f=fees[i], feeAmt=amt*f, netAmt=amt-feeAmt;
+    const inc=netAmt*(a.yield/100), fv=netAmt*Math.pow(1+a.er/100,tenor);
+    totW+=wi; totAmt+=amt; totFee+=feeAmt; totNet+=netAmt; totInc+=inc;
+    const feeTd = hasFee ? `<td class="${f>0?'neg':''}">${(f*100).toFixed(2)}%</td><td class="${f>0?'neg':''}">${f>0?'−':''}${cur}${fmt(feeAmt,0)}</td>` : '';
+    html += `<tr><td><span style="color:${COLORS[i%COLORS.length]}">●</span> ${a.name}${a.locked?' 🔒':''}</td><td>${fmtPct(wi)}</td><td class="${a.er>=0?'pos':'neg'}">${a.er.toFixed(2)}%</td><td>${a.yield.toFixed(2)}%</td><td class="${(a.er-a.yield)>=0?'pos':'neg'}">${(a.er-a.yield).toFixed(2)}%</td><td>${a.sd.toFixed(2)}%</td><td>${cur}${fmt(amt,0)}</td>${feeTd}<td>${cur}${fmt(netAmt,0)}</td><td class="pos">${cur}${fmt(inc,0)}</td><td class="pos">${cur}${fmt(fv,0)}</td></tr>`;
   });
-  html += `<tr class="total-row"><td>${t('portfolio')}</td><td>${fmtPct(totW)}</td><td class="${detail.annualReturn>=0?'pos':'neg'}">${fmtPct(detail.annualReturn)}</td><td>${fmtPct(detail.annualIncomeYield)}</td><td class="${detail.capitalGrowthReturn>=0?'pos':'neg'}">${fmtPct(detail.capitalGrowthReturn)}</td><td>${fmtPct(detail.stdDev)}</td><td>${cur}${fmt(totAmt,0)}</td><td class="pos">${cur}${fmt(totInc,0)}</td><td class="pos">${cur}${fmt(detail.fv,0)}</td></tr></tbody>`;
-  html += `<tfoot><tr><td colspan="9" style="padding-top:14px;">
+  const feeTotTd = hasFee ? `<td class="neg">${(detail.feeRate*100).toFixed(2)}%</td><td class="neg">−${cur}${fmt(totFee,0)}</td>` : '';
+  html += `<tr class="total-row"><td>${t('portfolio')}</td><td>${fmtPct(totW)}</td><td class="${detail.annualReturn>=0?'pos':'neg'}">${fmtPct(detail.annualReturn)}</td><td>${fmtPct(detail.annualIncomeYield)}</td><td class="${detail.capitalGrowthReturn>=0?'pos':'neg'}">${fmtPct(detail.capitalGrowthReturn)}</td><td>${fmtPct(detail.stdDev)}</td><td>${cur}${fmt(totAmt,0)}</td>${feeTotTd}<td>${cur}${fmt(totNet,0)}</td><td class="pos">${cur}${fmt(totInc,0)}</td><td class="pos">${cur}${fmt(detail.fv,0)}</td></tr></tbody>`;
+  const colCount = hasFee ? 12 : 10;
+  const feeFoot = hasFee ? `<div style="color:var(--text-dim);">${t('feeTotalLbl')} ${tip('tip_fee')}: <strong class="neg">${cur}${fmt(detail.feeAmount,0)}</strong> <span style="font-size:10px;">(${(detail.feeRate*100).toFixed(2)}%)</span></div>
+      <div style="color:var(--text-dim);">${t('feeDragLbl')}: <strong class="neg">−${(detail.feeDrag*100).toFixed(2)}% p.a.</strong> <span style="font-size:10px;">(${LANG==='zh'?'費前':'gross'} ${(detail.grossAnnualReturn*100).toFixed(2)}%)</span></div>` : '';
+  html += `<tfoot><tr><td colspan="${colCount}" style="padding-top:14px;">
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;font-size:11px;">
       <div style="color:var(--text-dim);">${t('kpiSharpe')}: <strong style="color:var(--accent);">${detail.sharpe.toFixed(3)}</strong></div>
+      ${feeFoot}
       <div style="color:var(--text-dim);">1Y 95% VaR ${tip('tip_var95')}: <strong class="neg">${cur}${fmt(detail.var95Amount,0)}</strong></div>
       <div style="color:var(--text-dim);">1Y 99% VaR ${tip('tip_var99')}: <strong class="neg">${cur}${fmt(detail.var99Amount,0)}</strong></div>
       <div style="color:var(--text-dim);">${LANG==='zh'?'整個投資期估計最大回撤':'Est. Max DD ('+tenor+'Y)'} ${tip('tip_maxdd')}: <strong class="neg">${fmtPct(detail.estMaxDD)}</strong></div>
@@ -824,50 +863,71 @@ function closePdfModal() { document.getElementById('pdfModal').classList.remove(
 
 // Render a single target-portfolio card (KPIs + allocation) for the PDF split view
 function renderPdfPortfolioCard(w, mu, cov, amount, tenor, rf, isZH) {
-  const d = portfolioDetail(w, mu, cov, state.assets.map(a=>a.yield/100), amount, tenor, rf);
+  const fees = getFees();
+  const hasFee = fees.some(f => f > 1e-12);
+  const d = portfolioDetail(w, mu, cov, state.assets.map(a=>a.yield/100), amount, tenor, rf, fees);
   const fmt = (n,dd=0) => n.toLocaleString('en-US',{minimumFractionDigits:dd,maximumFractionDigits:dd});
   const cur = curSym();
   const fiveYProfit = d.fv - amount;
   const kpis = [
-    [isZH?'預期年回報':'Expected Return', (d.annualReturn*100).toFixed(2)+'%', isZH?'總回報（增值+收入）':'Total return', true],
+    [isZH?'預期年回報':'Expected Return', (d.annualReturn*100).toFixed(2)+'%', hasFee?(isZH?'扣費後（費前 '+(d.grossAnnualReturn*100).toFixed(2)+'%）':'Net of fees (gross '+(d.grossAnnualReturn*100).toFixed(2)+'%)'):(isZH?'總回報（增值+收入）':'Total return'), true],
     [isZH?'組合風險 (σ)':'Portfolio Risk (σ)', (d.stdDev*100).toFixed(2)+'%', isZH?'年化波動率':'Annualized vol.', false],
     [isZH?'夏普比率':'Sharpe Ratio', d.sharpe.toFixed(3), isZH?'越高越好':'Higher = better', false],
     [isZH?'年度收入':'Annual Income', cur+fmt(d.annualIncome,0), isZH?'收益率 '+(d.annualIncomeYield*100).toFixed(2)+'%':'Yield '+(d.annualIncomeYield*100).toFixed(2)+'%', true],
     [isZH?tenor+'年後未來價值':tenor+'Y FV', cur+fmt(d.fv,0), isZH?'總回報 '+((d.fv/amount-1)*100).toFixed(1)+'%':'Total '+((d.fv/amount-1)*100).toFixed(1)+'%', true],
-    [isZH?tenor+'年收益':'5Y Profit', cur+fmt(fiveYProfit,0), isZH?'未來價值 − 本金':'FV − principal', fiveYProfit>=0],
+    [isZH?tenor+'年收益':tenor+'Y Profit', cur+fmt(fiveYProfit,0), isZH?'未來價值 − 本金':'FV − principal', fiveYProfit>=0],
   ];
+  // One-off fee row (only when a fee is charged): fee$ / net invested / annual drag
+  if (hasFee) {
+    kpis.push([isZH?'一次性費用':'One-off Fee', '−'+cur+fmt(d.feeAmount,0), (d.feeRate*100).toFixed(2)+'%', false, 'red']);
+    kpis.push([isZH?'淨投資額':'Net Invested', cur+fmt(d.netAmount,0), isZH?'扣除費用後本金':'After fee deduction', true]);
+    kpis.push([isZH?'費用年化拖累':'Fee Drag p.a.', '−'+(d.feeDrag*100).toFixed(2)+'%', isZH?'攤分至每年':'Amortized per year', false, 'red']);
+  }
   const alloc = state.assets.map((a,i) => {
     const wt = w[i]||0;
     const col = COLORS[i%COLORS.length];
     return `<div class="alloc-bar"><span class="dot" style="background:${col}"></span><div class="name">${a.name}</div><div class="bar"><div class="fill" style="width:${Math.max(0,wt*100)}%;background:${col};"></div></div><div class="pct">${(wt*100).toFixed(1)}%</div></div>`;
   }).join('');
-  const kpiHtml = kpis.map(k => `<div class="kpi-box"><div class="label">${k[0]}</div><div class="value ${k[3]?'green':'accent'}">${k[1]}</div><div class="sub">${k[2]}</div></div>`).join('');
+  const kpiHtml = kpis.map(k => `<div class="kpi-box"><div class="label">${k[0]}</div><div class="value ${k[4]==='red'?'red':(k[3]?'green':'accent')}">${k[1]}</div><div class="sub">${k[2]}</div></div>`).join('');
   return `<div class="card-kpis">${kpiHtml}</div><div class="card-alloc">${alloc}</div>`;
 }
 
 // Return & income breakdown table for a specific portfolio weight vector
 function renderPdfReturnIncome(w, mu, cov, amount, tenor, rf, isZH) {
-  const d = portfolioDetail(w, mu, cov, state.assets.map(a=>a.yield/100), amount, tenor, rf);
+  const fees = getFees();
+  const hasFee = fees.some(f => f > 1e-12);
+  const d = portfolioDetail(w, mu, cov, state.assets.map(a=>a.yield/100), amount, tenor, rf, fees);
   const cur = curSym();
   const fmt = (n,dd=0) => n.toLocaleString('en-US',{minimumFractionDigits:dd,maximumFractionDigits:dd});
+  let totFee = 0, totNet = 0, totInc = 0;
   const rows = state.assets.map((a,i) => {
-    const wi=w[i]||0, amt=amount*wi, inc=amt*(a.yield/100), fv=amt*Math.pow(1+a.er/100,tenor);
-    return `<tr><td>${a.name}</td><td>${(wi*100).toFixed(1)}%</td><td>${a.er.toFixed(1)}%</td><td>${a.yield.toFixed(1)}%</td><td>${cur}${fmt(amt,0)}</td><td class="pos">${cur}${fmt(inc,0)}</td><td class="pos">${cur}${fmt(fv,0)}</td></tr>`;
+    const wi=w[i]||0, amt=amount*wi, f=fees[i], feeAmt=amt*f, netAmt=amt-feeAmt;
+    const inc=netAmt*(a.yield/100), fv=netAmt*Math.pow(1+a.er/100,tenor);
+    totFee+=feeAmt; totNet+=netAmt; totInc+=inc;
+    const feeTd = hasFee ? `<td class="neg">${f>0?'−'+cur+fmt(feeAmt,0):'—'}</td><td>${cur}${fmt(netAmt,0)}</td>` : '';
+    return `<tr><td>${a.name}</td><td>${(wi*100).toFixed(1)}%</td><td>${a.er.toFixed(1)}%</td><td>${a.yield.toFixed(1)}%</td><td>${cur}${fmt(amt,0)}</td>${feeTd}<td class="pos">${cur}${fmt(inc,0)}</td><td class="pos">${cur}${fmt(fv,0)}</td></tr>`;
   }).join('');
+  const feeTh = hasFee ? `<th>${isZH?'費用':'Fee'}</th><th>${isZH?'淨投資':'Net Inv.'}</th>` : '';
+  const feeTotTd = hasFee ? `<td class="neg">−${cur}${fmt(totFee,0)}</td><td>${cur}${fmt(totNet,0)}</td>` : '';
   return `<table>
-    <thead><tr><th>${isZH?'資產':'Asset'}</th><th>${isZH?'權重':'Weight'}</th><th>E(R)</th><th>${isZH?'收益率':'Yield'}</th><th>${isZH?'金額':'Amount'}</th><th>${isZH?'年收入':'Ann. Income'}</th><th>${tenor}Y FV</th></tr></thead>
+    <thead><tr><th>${isZH?'資產':'Asset'}</th><th>${isZH?'權重':'Weight'}</th><th>E(R)</th><th>${isZH?'收益率':'Yield'}</th><th>${isZH?'金額':'Amount'}</th>${feeTh}<th>${isZH?'年收入':'Ann. Income'}</th><th>${tenor}Y FV</th></tr></thead>
     <tbody>${rows}
-      <tr class="total"><td>${isZH?'投資組合':'PORTFOLIO'}</td><td>100.0%</td><td>${(d.annualReturn*100).toFixed(1)}%</td><td>${(d.annualIncomeYield*100).toFixed(1)}%</td><td>${cur}${fmt(amount,0)}</td><td class="pos">${cur}${fmt(d.annualIncome,0)}</td><td class="pos">${cur}${fmt(d.fv,0)}</td></tr>
+      <tr class="total"><td>${isZH?'投資組合':'PORTFOLIO'}</td><td>100.0%</td><td>${(d.annualReturn*100).toFixed(1)}%</td><td>${(d.annualIncomeYield*100).toFixed(1)}%</td><td>${cur}${fmt(amount,0)}</td>${feeTotTd}<td class="pos">${cur}${fmt(d.annualIncome,0)}</td><td class="pos">${cur}${fmt(d.fv,0)}</td></tr>
     </tbody></table>`;
 }
 
 // Risk metrics table for a specific portfolio weight vector
 function renderPdfRiskMetrics(w, mu, cov, amount, tenor, rf, isZH) {
-  const d = portfolioDetail(w, mu, cov, state.assets.map(a=>a.yield/100), amount, tenor, rf);
+  const fees = getFees();
+  const hasFee = fees.some(f => f > 1e-12);
+  const d = portfolioDetail(w, mu, cov, state.assets.map(a=>a.yield/100), amount, tenor, rf, fees);
   const cur = curSym();
   const fmt = (n,dd=0) => n.toLocaleString('en-US',{minimumFractionDigits:dd,maximumFractionDigits:dd});
+  const feeRow = hasFee ? `<tr><td>${isZH?'一次性費用（總額）':'One-off Fee (total)'}</td><td class="neg">−${cur}${fmt(d.feeAmount,0)} <span style="color:#6b7280;font-size:9px">(${(d.feeRate*100).toFixed(2)}% ${isZH?'· 開倉時扣除':'· deducted upfront'})</span></td></tr>
+    <tr><td>${isZH?'費用年化拖累':'Fee Drag p.a.'}</td><td class="neg">−${(d.feeDrag*100).toFixed(2)}% <span style="color:#6b7280;font-size:9px">(${isZH?'費前':'gross'} ${(d.grossAnnualReturn*100).toFixed(2)}% → ${isZH?'費後':'net'} ${(d.annualReturn*100).toFixed(2)}%)</span></td></tr>` : '';
   return `<table>
     <tr><td>${isZH?'夏普比率':'Sharpe Ratio'}</td><td><strong style="color:#007A3D">${d.sharpe.toFixed(3)}</strong></td></tr>
+    ${feeRow}
     <tr><td>${isZH?'1年 95% VaR':'1-Year 95% VaR'}</td><td class="neg">${cur}${fmt(d.var95Amount,0)} <span style="color:#6b7280;font-size:9px">(${isZH?'5% 機率至少損失此金額':'5% chance of losing at least this'})</span></td></tr>
     <tr><td>${isZH?tenor+'年估計最大回撤':'Est. Max Drawdown ('+tenor+'Y)'} </td><td class="neg">${(d.estMaxDD*100).toFixed(1)}% <span style="color:#6b7280;font-size:9px">(${isZH?'從高位至低位最大跌幅':'peak-to-trough decline'})</span></td></tr>
     <tr><td>${isZH?'分散比率':'Diversification Ratio'}</td><td><strong style="color:#007A3D">${d.diversificationRatio.toFixed(2)}×</strong></td></tr>
@@ -890,6 +950,11 @@ function generatePdf() {
   // correlated assets). Mirrors optimizer.js optimizeConstrained().
   const muSafe = mu.map(m => (isFinite(m) ? m : 0));
   const cov = buildCovMatrix(state.assets.map(a=>a.sd/100), state.corr);
+  // One-off fees: the PDF optimizes on NET returns, exactly like the dashboard,
+  // so the proposal's allocations and KPIs match the on-screen numbers.
+  const fees = getFees();
+  const hasFee = fees.some(f => f > 1e-12);
+  const muNet = netExpectedReturns(muSafe, fees, tenor);
 
   // The two target portfolios, computed with the SAME constraints the user
   // set on the dashboard (min/max weights, locks) so the PDF matches the UI.
@@ -898,16 +963,16 @@ function generatePdf() {
   const minW = state.assets.map(a=>a.locked?a.lockWeight:globalMin);
   const maxW = state.assets.map(a=>a.locked?a.lockWeight:globalMax);
   let wMax, wMin;
-  try { wMax = optimizeConstrained(cov, muSafe, rf, minW, maxW, 'maxSharpe', null, getLambda()); } catch(e) { wMax = new Array(muSafe.length).fill(1/muSafe.length); }
-  try { wMin = optimizeConstrained(cov, muSafe, rf, minW, maxW, 'minVar', null, getLambda()); } catch(e) { wMin = new Array(muSafe.length).fill(1/muSafe.length); }
+  try { wMax = optimizeConstrained(cov, muNet, rf, minW, maxW, 'maxSharpe', null, getLambda()); } catch(e) { wMax = new Array(muSafe.length).fill(1/muSafe.length); }
+  try { wMin = optimizeConstrained(cov, muNet, rf, minW, maxW, 'minVar', null, getLambda()); } catch(e) { wMin = new Array(muSafe.length).fill(1/muSafe.length); }
   const zeros = new Array(mu.length).fill(0), ones = new Array(mu.length).fill(1);
   const prevW = state.weights ? [...state.weights] : null;
   const prevMethod = state.method;
 
   // Capture frontier images (save/restore dashboard state)
   let maxFrontier='', minFrontier='';
-  try { drawFrontier(cov, mu, rf, zeros, ones, wMax); maxFrontier = document.getElementById('frontierChart').toDataURL('image/png'); } catch(e){}
-  try { drawFrontier(cov, mu, rf, zeros, ones, wMin); minFrontier = document.getElementById('frontierChart').toDataURL('image/png'); } catch(e){}
+  try { drawFrontier(cov, muNet, rf, zeros, ones, wMax); maxFrontier = document.getElementById('frontierChart').toDataURL('image/png'); } catch(e){}
+  try { drawFrontier(cov, muNet, rf, zeros, ones, wMin); minFrontier = document.getElementById('frontierChart').toDataURL('image/png'); } catch(e){}
   if (prevW) state.weights = prevW;
   state.method = prevMethod;
 
@@ -932,7 +997,7 @@ function generatePdf() {
     .kpi-box { background: #f5f6fa; border-radius: 6px; padding: 9px 6px; text-align: center; }
     .kpi-box .label { font-size: 8.5px; color: #6b7280; text-transform: uppercase; font-weight: 600; }
     .kpi-box .value { font-size: 15px; font-weight: 800; margin-top: 2px; }
-    .kpi-box .value.green { color: #007A3D; } .kpi-box .value.accent { color: #007A3D; }
+    .kpi-box .value.green { color: #007A3D; } .kpi-box .value.accent { color: #007A3D; } .kpi-box .value.red { color: #c42b1c; }
     .kpi-box .sub { font-size: 8px; color: #6b7280; margin-top: 1px; }
     table { width: 100%; border-collapse: collapse; font-size: 10px; }
     th { text-align: right; padding: 5px 6px; color: #6b7280; border-bottom: 2px solid #e2e5ed; font-weight: 600; }
@@ -960,6 +1025,7 @@ function generatePdf() {
     <table>
       <tr><td>${isZH?'貨幣':'Currency'}</td><td>${document.getElementById('currency').value}</td></tr>
       <tr><td>${isZH?'投資金額':'Investment Amount'}</td><td>${cur}${fmt(amount,0)}</td></tr>
+      ${hasFee ? `<tr><td>${isZH?'一次性費用（開倉扣除）':'One-off Fee (deducted upfront)'}</td><td style="color:#c42b1c">−${cur}${fmt(amount*state.assets.reduce((s,a,i)=>s+(wMax[i]||0)*fees[i],0),0)} ~ −${cur}${fmt(amount*state.assets.reduce((s,a,i)=>s+(wMin[i]||0)*fees[i],0),0)}</td></tr>` : ''}
       <tr><td>${isZH?'投資年期':'Investment Tenor'}</td><td>${tenor} ${isZH?'年':'Years'}</td></tr>
       <tr><td>${isZH?'目標年回報 (%)':'Target Annual Return (%)'}</td><td>${(getTarget()*100).toFixed(2)}%</td></tr>
       <tr><td>${isZH?'風險承受度 (1-10，10為最保守)':'Risk Tolerance (1-10, 10=most conservative)'}</td><td>${getLambda()}</td></tr>
