@@ -79,6 +79,9 @@ function buildCovMatrix(stdDevs, corr) {
   for (let i = 0; i < n; i++)
     for (let j = 0; j < n; j++)
       cov[i][j] = corr[i][j] * stdDevs[i] * stdDevs[j];
+  // Numerical guard: a zero-vol asset (e.g. CD / cash with σ=0) makes Σ singular.
+  // Add a tiny diagonal jitter so Σ stays invertible for the optimizer & PDF export.
+  for (let i = 0; i < n; i++) cov[i][i] += 1e-8;
   return cov;
 }
 
