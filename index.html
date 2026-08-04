@@ -138,6 +138,9 @@
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 500; display: none; align-items: center; justify-content: center; }
     .modal-overlay.show { display: flex; }
     .modal { background: var(--panel); border-radius: 12px; padding: 28px; box-shadow: var(--shadow-lg); max-width: 420px; width: 90%; }
+    .modal-wide { max-width: 820px; }
+    .btn-print { background: #007A3D; color: #fff; }
+    .btn-print:hover { filter: brightness(1.08); }
     .modal h3 { font-size: 16px; margin-bottom: 16px; }
     .modal input { width: 100%; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 14px; margin-bottom: 16px; }
     .modal .btn-row { display: flex; gap: 8px; justify-content: flex-end; }
@@ -337,13 +340,15 @@
 
 <!-- PDF Export Modal -->
 <div class="modal-overlay" id="pdfModal">
-  <div class="modal">
+  <div class="modal modal-wide">
     <h3 data-i18n="pdfTitle">Export Client Proposal (PDF)</h3>
     <input type="text" id="clientName" placeholder="Client Name / 客戶名稱" onkeydown="if(event.key==='Enter')generatePdf()">
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="closePdfModal()" data-i18n="cancel">Cancel</button>
       <button class="btn" onclick="generatePdf()" data-i18n="generatePdf">Generate PDF</button>
+      <button class="btn btn-print" id="pdfPrintBtn" style="display:none" onclick="printPdfFromIframe()">🖨 Print / Save PDF</button>
     </div>
+    <iframe id="pdfPreview" style="display:none;width:100%;height:70vh;border:1px solid #e2e5ed;border-radius:8px;margin-top:12px;background:#fff;"></iframe>
   </div>
 </div>
 
@@ -812,7 +817,7 @@ function switchTab(evt, tabId) {
 //  PDF EXPORT
 // ═══════════════════════════════════════════
 function openPdfModal() { document.getElementById('pdfModal').classList.add('show'); document.getElementById('clientName').focus(); }
-function closePdfModal() { document.getElementById('pdfModal').classList.remove('show'); }
+function closePdfModal() { document.getElementById('pdfModal').classList.remove('show'); const pv=document.getElementById('pdfPreview'); if(pv){pv.style.display='none'; pv.srcdoc='';} const pb=document.getElementById('pdfPrintBtn'); if(pb) pb.style.display='none'; }
 
 // Render a single target-portfolio card (KPIs + allocation) for the PDF split view
 function renderPdfPortfolioCard(w, mu, cov, amount, tenor, rf, isZH) {
@@ -969,15 +974,24 @@ function generatePdf() {
     ${isZH?'免責聲明：本建議書僅供參考，不構成投資建議。投資涉及風險，過往表現不代表未來回報。數字為模型估算，實際結果可能有別。':'Disclaimer: This proposal is for reference only and does not constitute investment advice. Investments involve risk; past performance is not indicative of future returns. Figures are model estimates; actual results may differ.'}
   </div>
   `;
-  // Add print script via DOM (avoids script-tag parsing issue)
-  const printScript = document.createElement('script');
-  printScript.textContent = 'window.onload=function(){window.print();};';
+  const w = document.getElementById('pdfPreview');
+  const printBtn = document.getElementById('pdfPrintBtn');
+  try {
+    w.srcdoc = html + '</body></html>';
+    w.style.display = 'block';
+    printBtn.style.display = 'inline-block';
+    showMsg(isZH?'預覽已生成，撳「Print / Save PDF」存檔':'Preview ready — click Print / Save PDF');
+  } catch(e) {
+    showMsg(isZH?'PDF 生成失敗':'PDF generation failed');
+  }
+}
 
-  const w = window.open('', '_blank');
-  if (!w) { showMsg(isZH?'請允許彈出視窗':'Please allow popups'); return; }
-  w.document.write(html + '</body></html>');
-  w.document.close();
-  try { w.document.body.appendChild(printScript); } catch(e) {}
+// Print the proposal rendered inside the preview iframe (no popup needed)
+function printPdfFromIframe() {
+  const w = document.getElementById('pdfPreview');
+  if (!w || !w.contentWindow) { showMsg(isZH?'預覽未生成':'Preview not ready'); return; }
+  try { w.contentWindow.focus(); w.contentWindow.print(); }
+  catch(e) { showMsg(isZH?'列印失敗，請允許列印':'Print failed — allow printing'); }
 }
 
 // ═══════════════════════════════════════════
