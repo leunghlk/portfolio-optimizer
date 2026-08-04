@@ -933,7 +933,9 @@ function renderPdfReturnIncome(w, mu, cov, amount, tenor, rf, isZH) {
   const hasFee = fees.some(f => f > 1e-12);
   const d = portfolioDetail(w, mu, cov, state.assets.map(a=>a.yield/100), amount, tenor, rf, fees);
   const cur = curSym();
-  const cf = (n, dec) => pdfMoney(n, cur, dec);
+  // Currency is stated ONCE at the top of the PDF, so the Return & Income table
+  // omits the $ symbol to save width and avoid overlap (Kathy 2026-08-04).
+  const cf = (n, dec) => pdfMoney(n, '', dec);
   const p1 = v => (v*100).toFixed(1) + '%';   // ONE decimal place for all % figures
   let totFee = 0, totNet = 0, totInc = 0;
   const rows = state.assets.map((a,i) => {

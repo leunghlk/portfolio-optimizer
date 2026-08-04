@@ -258,6 +258,15 @@ chk('PDF Client Profile has fee row', /deducted upfront/.test(pdfHtml));
 })();
 chk('PDF Return&Income has Fee column', /<th>Fee<\/th>/.test(pdfHtml));
 chk('PDF Return&Income has Net Inv. column', /Net Inv\./.test(pdfHtml));
+// --- Kathy 2026-08-04: currency stated once at top, NOT repeated in the table ---
+(() => {
+  const pdoc = doc.implementation.createHTMLDocument('p');
+  pdoc.documentElement.innerHTML = pdfHtml;
+  const ri = pdoc.querySelector('.ri-table');
+  const cells = ri ? [...ri.querySelectorAll('td')].map(td => td.textContent) : [];
+  const anyDollar = cells.some(t => t.includes('\$'));
+  chk('PDF Return&Income table cells have NO currency symbol', !anyDollar, anyDollar ? cells.filter(t=>t.includes('\$')).slice(0,3).join(' | ') : 'clean');
+})();
 // --- Kathy 2026-08-04 removals ---
 chk('PDF has NO Left:/Right: prefix', !/Left:|Right:|左：|右：/.test(pdfHtml));
 chk('PDF KPI card has NO One-off Fee row', !/One-off Fee<\/div>|一次性費用<\/div>/.test(pdfHtml));
