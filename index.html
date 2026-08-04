@@ -1032,22 +1032,31 @@ function generatePdf() {
   const prevW = state.weights ? [...state.weights] : null;
   const prevMethod = state.method;
 
-  // Capture frontier images (save/restore dashboard state)
+  // Capture frontier images (save/restore dashboard state).
+  // IMPORTANT: the frontier canvas lives inside tab-frontier, which is
+  // display:none when another tab is active. Chrome returns a BLANK image for
+  // toDataURL() on a hidden canvas, so we must reveal the tab first, snapshot,
+  // then restore. Without this the PDF's "Efficient Frontier" block is empty.
   let maxFrontier='', minFrontier='';
+  const tf = document.getElementById('tab-frontier'), ta = document.getElementById('tab-allocation');
+  const wasFrontierHidden = tf && !tf.classList.contains('active');
+  if (tf) tf.classList.add('active');
+  if (ta) ta.classList.remove('active');
   try { drawFrontier(cov, muNet, rf, zeros, ones, wMax); maxFrontier = document.getElementById('frontierChart').toDataURL('image/png'); } catch(e){}
   try { drawFrontier(cov, muNet, rf, zeros, ones, wMin); minFrontier = document.getElementById('frontierChart').toDataURL('image/png'); } catch(e){}
+  if (wasFrontierHidden) { if (tf) tf.classList.remove('active'); if (ta) ta.classList.add('active'); }
   if (prevW) state.weights = prevW;
   state.method = prevMethod;
 
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
   <title>${clientName} — ${isZH?'投資組合建議書':'Portfolio Proposal'}</title>
   <style>
-    @page { size: A4; margin: 10mm; }
+    @page { size: A4; margin: 11mm; }
     /* Hide the browser's auto print header/footer (e.g. "about:srcdoc" URL,
        page numbers) so the saved PDF shows ONLY our content. */
-    @page :first { margin: 10mm; }
+    @page :first { margin: 11mm; }
     @media print {
-      @page { margin: 10mm; }
+      @page { margin: 11mm; }
       head, title, link, meta { display: none !important; }
     }
     /* CRITICAL: make the PRINTED/SAVED version identical to the preview.
@@ -1056,23 +1065,23 @@ function generatePdf() {
        saved PDF looks blank. Force exact rendering + keep backgrounds. */
     * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     html, body { height: auto !important; }
-    body { font-family: -apple-system, 'Helvetica Neue', sans-serif; color: #1a1d28; font-size: 8.5px; line-height: 1.2; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .header { text-align:center; padding: 5px 0; border-bottom: 3px solid #007A3D; margin-bottom: 6px; }
-    .header h1 { font-size: 15px; color: #007A3D; margin-bottom: 1px; }
-    .header .client { font-size: 11px; font-weight: 600; }
+    body { font-family: -apple-system, 'Helvetica Neue', sans-serif; color: #1a1d28; font-size: 9px; line-height: 1.3; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .header { text-align:center; padding: 7px 0; border-bottom: 3px solid #007A3D; margin-bottom: 8px; }
+    .header h1 { font-size: 16px; color: #007A3D; margin-bottom: 1px; }
+    .header .client { font-size: 12px; font-weight: 600; }
     .header .date { font-size: 8px; color: #6b7280; }
-    .section { margin-bottom: 5px; }
-    .section > h2 { font-size: 10.5px; color: #007A3D; border-bottom: 1px solid #e2e5ed; padding-bottom: 2px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .section { margin-bottom: 6px; }
+    .section > h2 { font-size: 11px; color: #007A3D; border-bottom: 1px solid #e2e5ed; padding-bottom: 2px; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.3px; }
     .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
-    .two-col .col { border: 1px solid #e2e5ed; border-radius: 6px; padding: 5px; }
-    .two-col .col-title { font-size: 9px; font-weight: 700; color: #007A3D; text-align: center; margin-bottom: 4px; padding-bottom: 2px; border-bottom: 1px dashed #cdd3df; }
-    .two-col .col h3 { font-size: 9.5px; color: #374151; margin: 6px 0 3px; border-bottom: 1px solid #eef0f4; padding-bottom: 2px; }
-    .card-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: 5px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    .two-col .col { border: 1px solid #e2e5ed; border-radius: 6px; padding: 6px; }
+    .two-col .col-title { font-size: 9.5px; font-weight: 700; color: #007A3D; text-align: center; margin-bottom: 5px; padding-bottom: 3px; border-bottom: 1px dashed #cdd3df; }
+    .two-col .col h3 { font-size: 10px; color: #374151; margin: 7px 0 3px; border-bottom: 1px solid #eef0f4; padding-bottom: 2px; }
+    .card-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: 6px; }
     .card-alloc { display: flex; flex-direction: column; gap: 2px; margin-top: 2px; }
-    .kpi-box { background: #f5f6fa; border-radius: 6px; padding: 5px 3px; text-align: center; }
+    .kpi-box { background: #f5f6fa; border-radius: 6px; padding: 6px 3px; text-align: center; }
     .kpi-box .label { font-size: 7px; color: #6b7280; text-transform: uppercase; font-weight: 600; }
-    .kpi-box .value { font-size: 12px; font-weight: 800; margin-top: 1px; }
+    .kpi-box .value { font-size: 12.5px; font-weight: 800; margin-top: 1px; }
     .kpi-box .value.green { color: #007A3D; } .kpi-box .value.accent { color: #007A3D; } .kpi-box .value.red { color: #c42b1c; }
     .kpi-box .sub { font-size: 6.5px; color: #6b7280; margin-top: 1px; }
     .profile-table { table-layout: fixed; width: 100%; font-size: 8.5px; }
@@ -1088,15 +1097,15 @@ function generatePdf() {
     td { padding: 2px 3px; border-bottom: 1px solid #e2e5ed; text-align: right; white-space: nowrap; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; }
     /* Label column may wrap (long descriptions); numeric columns never do. */
     td:first-child { text-align: left; font-weight: 600; white-space: normal; word-break: break-word; overflow: visible; }
-    /* Return & Income table: 9 columns must fit the A4 column width, so shrink
-       the font and padding and let the asset-name column wrap instead of the
-       numbers. Percentages get the narrowest tracks. */
-    .ri-table { table-layout: fixed; font-size: 7px; width: 100%; }
+    /* Return & Income table: 9 columns. Widths MUST sum to 100% or table-layout:fixed
+       re-distributes and crushes the % columns, causing "100.0% 12.7%" to overlap.
+       name=16, W%=10, E(R)%=10, Yld%=10, Amt=13, Fee=12, Net=13, Inc=8, FV=8 = 100%. */
+    .ri-table { table-layout: fixed; font-size: 7.5px; width: 100%; }
     .ri-table th, .ri-table td { padding: 2px 1px; white-space: nowrap; overflow: visible; text-overflow: clip; }
-    .ri-table th:first-child, .ri-table td:first-child { font-size: 7px; overflow: visible; }
+    .ri-table th:first-child, .ri-table td:first-child { font-size: 7.5px; overflow: visible; }
     .ri-table col.c-name { width: 16%; }
-    .ri-table col.c-num  { width: 9.5%; }
-    .ri-table col.c-amt  { width: 14%; }
+    .ri-table col.c-num  { width: 10%; }
+    .ri-table col.c-amt  { width: 13%; }
     .total { background: #eef7f2; font-weight: 800; }
     .alloc-bar { display: flex; align-items: center; gap: 4px; margin: 2px 0; }
     .alloc-bar .dot { width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto; display: inline-block; }
@@ -1104,7 +1113,7 @@ function generatePdf() {
     .alloc-bar .bar { flex: 1; height: 14px; background: #f0f2f5; border-radius: 4px; overflow: hidden; }
     .alloc-bar .fill { height: 100%; border-radius: 4px; }
     .alloc-bar .pct { width: 40px; text-align: right; font-weight: 700; font-size: 9px; }
-    .frontier-img { width: 100%; max-width: 120px; height: auto; display: block; margin: 0 auto; page-break-inside: avoid; }
+    .frontier-img { width: 100%; max-width: 200px; height: auto; display: block; margin: 0 auto; page-break-inside: avoid; border: 1px solid #e2e5ed; border-radius: 4px; background: #fff; }
     .footer { text-align: center; font-size: 7.5px; color: #6b7280; margin-top: 6px; border-top: 1px solid #e2e5ed; padding-top: 4px; line-height: 1.25; }
     .pos { color: #007A3D; } .neg { color: #dc2626; }
   </style></head><body>
@@ -1169,16 +1178,28 @@ function generatePdf() {
   }
 }
 
-// Print the proposal rendered inside the preview iframe (no popup needed)
+// Print the proposal. We open the srcdoc HTML in a fresh about:blank window and
+// print THAT, so the print dialog's auto-footer shows "about:blank" instead of
+// "about:srcdoc". (The footer itself — page numbers / URL — is added by the
+// browser's print dialog "Headers and footers" checkbox; untick it to remove.)
 function printPdfFromIframe() {
   const w = document.getElementById('pdfPreview');
-  if (!w || !w.contentWindow) { showMsg(isZH?'預覽未生成':'Preview not ready'); return; }
-  try { w.contentWindow.focus(); w.contentWindow.print(); }
-  catch(e) { showMsg(isZH?'列印失敗，請允許列印':'Print failed — allow printing'); }
-  // Reminder: the browser print dialog has a "Headers and footers" checkbox that,
-  // if left ON, prints "about:srcdoc" / page numbers in the margin. Tell the user
-  // to untick it so the saved PDF matches the preview exactly.
-  setTimeout(() => showMsg(isZH?'儲存 PDF 前：取消勾選「頁首和頁尾」以移除 about:srcdoc':'Untick "Headers and footers" in the print dialog to drop about:srcdoc'), 400);
+  if (!w || !w.srcdoc) { showMsg(isZH?'預覽未生成':'Preview not ready'); return; }
+  try {
+    const pw = window.open('', '_blank');
+    if (!pw) { showMsg(isZH?'請允許彈出視窗以列印':'Allow popups to print'); return; }
+    pw.document.open();
+    pw.document.write(w.srcdoc);
+    pw.document.close();
+    pw.onload = () => { pw.focus(); pw.print(); };
+    // Fallback if onload already fired
+    setTimeout(() => { try { pw.focus(); pw.print(); } catch(e){} }, 600);
+  } catch(e) {
+    // Last resort: print the iframe directly
+    try { w.contentWindow.focus(); w.contentWindow.print(); } catch(e2) {}
+    showMsg(isZH?'列印失敗，請允許列印':'Print failed — allow printing');
+  }
+  setTimeout(() => showMsg(isZH?'儲存 PDF 前：取消勾選「頁首和頁尾」以徹底移除 about:srcdoc / 頁碼':'Untick "Headers and footers" in the print dialog to fully remove about:srcdoc / page numbers'), 400);
 }
 
 // ═══════════════════════════════════════════
