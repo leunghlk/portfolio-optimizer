@@ -929,25 +929,28 @@ function renderPdfReturnIncome(w, mu, cov, amount, tenor, rf, isZH) {
   const hasFee = fees.some(f => f > 1e-12);
   const d = portfolioDetail(w, mu, cov, state.assets.map(a=>a.yield/100), amount, tenor, rf, fees);
   const cur = curSym();
-  const cf = (n, dec) => pdfMoney(n, cur, dec);   // auto-scaled to the proposal's unit
+  const cf = (n, dec) => pdfMoney(n, cur, dec);
+  const p1 = v => (v*100).toFixed(1) + '%';   // ONE decimal place for all % figures
   let totFee = 0, totNet = 0, totInc = 0;
   const rows = state.assets.map((a,i) => {
     const wi=w[i]||0, amt=amount*wi, f=fees[i], feeAmt=amt*f, netAmt=amt-feeAmt;
     const inc=netAmt*(a.yield/100), fv=netAmt*Math.pow(1+a.er/100,tenor);
     totFee+=feeAmt; totNet+=netAmt; totInc+=inc;
     const feeTd = hasFee ? `<td class="neg">${f>0?cf(-feeAmt):'—'}</td><td>${cf(netAmt)}</td>` : '';
-    return `<tr><td>${a.name}</td><td>${(wi*100).toFixed(1)}%</td><td>${a.er.toFixed(1)}%</td><td>${a.yield.toFixed(1)}%</td><td>${cf(amt)}</td>${feeTd}<td class="pos">${cf(inc)}</td><td class="pos">${cf(fv)}</td></tr>`;
+    return `<tr><td>${a.name}</td><td>${p1(wi)}</td><td>${p1(a.er/100)}</td><td>${p1(a.yield/100)}</td><td>${cf(amt)}</td>${feeTd}<td class="pos">${cf(inc)}</td><td class="pos">${cf(fv)}</td></tr>`;
   }).join('');
   const feeTh = hasFee ? `<th>${isZH?'費用':'Fee'}</th><th>${isZH?'淨投資':'Net Inv.'}</th>` : '';
   const feeTotTd = hasFee ? `<td class="neg">${cf(-totFee)}</td><td>${cf(totNet)}</td>` : '';
-  // Explicit column widths so every figure (incl. "−HK$425,300") fits on one line.
+  // Explicit column widths — 9 cols; numbers get slightly wider tracks and a
+  // single decimal so every value shows fully (weight/E(R)/yield) without
+  // clipping and WITHOUT increasing row height (still nowrap, no wrap).
   const feeCols = hasFee ? '<col class="c-amt"><col class="c-amt">' : '';
   const colgroup = `<colgroup><col class="c-name"><col class="c-num"><col class="c-num"><col class="c-num"><col class="c-amt">${feeCols}<col class="c-amt"><col class="c-amt"></colgroup>`;
   return `<table class="ri-table">
     ${colgroup}
     <thead><tr><th>${isZH?'資產':'Asset'}</th><th>${isZH?'權重':'Weight'}</th><th>E(R)</th><th>${isZH?'收益率':'Yield'}</th><th>${isZH?'金額 ('+cur+(_pdfUnit?_pdfUnit.suf:'')+')':'Amount ('+cur+(_pdfUnit?_pdfUnit.suf:'')+')'}</th>${feeTh}<th>${isZH?'年收入':'Ann. Income'}</th><th>${tenor}Y FV</th></tr></thead>
     <tbody>${rows}
-      <tr class="total"><td>${isZH?'投資組合':'PORTFOLIO'}</td><td>100.0%</td><td>${(d.annualReturn*100).toFixed(1)}%</td><td>${(d.annualIncomeYield*100).toFixed(1)}%</td><td>${cf(amount)}</td>${feeTotTd}<td class="pos">${cf(d.annualIncome)}</td><td class="pos">${cf(d.fv)}</td></tr>
+      <tr class="total"><td>${isZH?'投資組合':'PORTFOLIO'}</td><td>100.0%</td><td>${p1(d.annualReturn)}</td><td>${p1(d.annualIncomeYield)}</td><td>${cf(amount)}</td>${feeTotTd}<td class="pos">${cf(d.annualIncome)}</td><td class="pos">${cf(d.fv)}</td></tr>
     </tbody></table>`;
 }
 
@@ -1040,7 +1043,19 @@ function generatePdf() {
   <title>${clientName} — ${isZH?'投資組合建議書':'Portfolio Proposal'}</title>
   <style>
     @page { size: A4; margin: 18mm; }
-    body { font-family: -apple-system, 'Helvetica Neue', sans-serif; color: #1a1d28; font-size: 11px; line-height: 1.45; }
+    /* Hide the browser's auto print header/footer (e.g. "about:srcdoc" URL,
+       page numbers) so the saved PDF shows ONLY our content. */
+    @page :first { margin: 18mm; }
+    @media print {
+      @page { margin: 18mm; }
+      head, title, link, meta { display: none !important; }
+    }
+    /* CRITICAL: make the PRINTED/SAVED version identical to the preview.
+       Browsers default to print-color-adjust:economy, which STRIPS all
+       background colors (alloc-bar fills, kpi grey, total-row green) so the
+       saved PDF looks blank. Force exact rendering + keep backgrounds. */
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { font-family: -apple-system, 'Helvetica Neue', sans-serif; color: #1a1d28; font-size: 11px; line-height: 1.45; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .header { text-align:center; padding: 14px 0; border-bottom: 3px solid #007A3D; margin-bottom: 18px; }
     .header h1 { font-size: 20px; color: #007A3D; margin-bottom: 2px; }
     .header .client { font-size: 15px; font-weight: 600; }
@@ -1049,7 +1064,7 @@ function generatePdf() {
     .section > h2 { font-size: 13px; color: #007A3D; border-bottom: 1px solid #e2e5ed; padding-bottom: 4px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.4px; }
     .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .two-col .col { border: 1px solid #e2e5ed; border-radius: 8px; padding: 12px; }
+    .two-col .col { border: 1px solid #e2e5ed; border-radius: 8px; padding: 12px; page-break-inside: avoid; }
     .two-col .col-title { font-size: 11px; font-weight: 700; color: #007A3D; text-align: center; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px dashed #cdd3df; }
     .two-col .col h3 { font-size: 11px; color: #374151; margin: 12px 0 6px; border-bottom: 1px solid #eef0f4; padding-bottom: 3px; }
     .card-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
@@ -1071,11 +1086,11 @@ function generatePdf() {
        the font and padding and let the asset-name column wrap instead of the
        numbers. Percentages get the narrowest tracks. */
     .ri-table { table-layout: fixed; font-size: 8px; width: 100%; }
-    .ri-table th, .ri-table td { padding: 3px 2px; }
-    .ri-table th:first-child, .ri-table td:first-child { font-size: 8px; }
-    .ri-table col.c-name { width: 17%; }
-    .ri-table col.c-num  { width: 8.5%; }
-    .ri-table col.c-amt  { width: 14.5%; }
+    .ri-table th, .ri-table td { padding: 3px 2px; white-space: nowrap; overflow: visible; text-overflow: clip; }
+    .ri-table th:first-child, .ri-table td:first-child { font-size: 8px; overflow: visible; }
+    .ri-table col.c-name { width: 16%; }
+    .ri-table col.c-num  { width: 9.5%; }
+    .ri-table col.c-amt  { width: 14%; }
     .total { background: #eef7f2; font-weight: 800; }
     .alloc-bar { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
     .alloc-bar .dot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; display: inline-block; }
@@ -1083,7 +1098,7 @@ function generatePdf() {
     .alloc-bar .bar { flex: 1; height: 16px; background: #f0f2f5; border-radius: 4px; overflow: hidden; }
     .alloc-bar .fill { height: 100%; border-radius: 4px; }
     .alloc-bar .pct { width: 46px; text-align: right; font-weight: 700; font-size: 10px; }
-    .frontier-img { width: 100%; max-width: 380px; display: block; margin: 0 auto; }
+    .frontier-img { width: 100%; max-width: 320px; height: auto; display: block; margin: 0 auto; page-break-inside: avoid; }
     .footer { text-align: center; font-size: 9px; color: #6b7280; margin-top: 24px; border-top: 1px solid #e2e5ed; padding-top: 10px; line-height: 1.4; }
     .pos { color: #007A3D; } .neg { color: #dc2626; }
   </style></head><body>
@@ -1096,8 +1111,7 @@ function generatePdf() {
   <div class="section">
     <h2>${isZH?'1. 客戶資料':'1. Client Profile'}</h2>
     <table>
-      <tr><td>${isZH?'貨幣':'Currency'}</td><td>${document.getElementById('currency').value}</td></tr>
-      <tr><td>${isZH?'投資金額':'Investment Amount'}</td><td>${curFmt(amount)}</td></tr>
+      <tr><td>${isZH?'貨幣 / 投資金額':'Currency / Investment Amount'}</td><td>${document.getElementById('currency').value} ${curFmt(amount)}</td></tr>
       ${''/* fee row intentionally removed from Client Profile per Kathy 2026-08-04 — it now lives in the per-portfolio Risk Metrics section */}
       <tr><td>${isZH?'投資年期':'Investment Tenor'}</td><td>${tenor} ${isZH?'年':'Years'}</td></tr>
       <tr><td>${isZH?'目標年回報 (%)':'Target Annual Return (%)'}</td><td>${(getTarget()*100).toFixed(2)}%</td></tr>
@@ -1154,6 +1168,10 @@ function printPdfFromIframe() {
   if (!w || !w.contentWindow) { showMsg(isZH?'預覽未生成':'Preview not ready'); return; }
   try { w.contentWindow.focus(); w.contentWindow.print(); }
   catch(e) { showMsg(isZH?'列印失敗，請允許列印':'Print failed — allow printing'); }
+  // Reminder: the browser print dialog has a "Headers and footers" checkbox that,
+  // if left ON, prints "about:srcdoc" / page numbers in the margin. Tell the user
+  // to untick it so the saved PDF matches the preview exactly.
+  setTimeout(() => showMsg(isZH?'儲存 PDF 前：取消勾選「頁首和頁尾」以移除 about:srcdoc':'Untick "Headers and footers" in the print dialog to drop about:srcdoc'), 400);
 }
 
 // ═══════════════════════════════════════════
