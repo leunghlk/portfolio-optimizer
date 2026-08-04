@@ -137,8 +137,10 @@
     /* Modal */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 500; display: none; align-items: center; justify-content: center; }
     .modal-overlay.show { display: flex; }
-    .modal { background: var(--panel); border-radius: 12px; padding: 28px; box-shadow: var(--shadow-lg); max-width: 420px; width: 90%; }
+    .modal { background: var(--panel); border-radius: 12px; padding: 28px; box-shadow: var(--shadow-lg); max-width: 420px; width: 90%; position: relative; }
     .modal-wide { max-width: 820px; }
+    .modal-close { position: absolute; top: 10px; right: 12px; width: 34px; height: 34px; border: none; border-radius: 8px; background: #f0f2f5; color: #374151; font-size: 22px; line-height: 1; cursor: pointer; font-weight: 700; }
+    .modal-close:hover { background: #e2e5ed; color: #dc2626; }
     .btn-print { background: #007A3D; color: #fff; }
     .btn-print:hover { filter: brightness(1.08); }
     .modal h3 { font-size: 16px; margin-bottom: 16px; }
@@ -341,6 +343,7 @@
 <!-- PDF Export Modal -->
 <div class="modal-overlay" id="pdfModal">
   <div class="modal modal-wide">
+    <button class="modal-close" onclick="closePdfModal()" title="Close & return to dashboard">×</button>
     <h3 data-i18n="pdfTitle">Export Client Proposal (PDF)</h3>
     <input type="text" id="clientName" placeholder="Client Name / 客戶名稱" onkeydown="if(event.key==='Enter')generatePdf()">
     <div class="btn-row">
@@ -886,15 +889,17 @@ function generatePdf() {
   // if a user enters a degenerate input (e.g. an asset with σ=0, or perfectly
   // correlated assets). Mirrors optimizer.js optimizeConstrained().
   const muSafe = mu.map(m => (isFinite(m) ? m : 0));
-  const cov = (() => {
-    const raw = buildCovMatrix(state.assets.map(a=>a.sd/100), state.corr);
-    return raw.map((row,i) => row.map((v,j) => (isFinite(v)?v:0) + (i===j ? 1e-8 : 0)));
-  })();
+  const cov = buildCovMatrix(state.assets.map(a=>a.sd/100), state.corr);
 
-  // The two fixed target portfolios (with safe fallbacks)
+  // The two target portfolios, computed with the SAME constraints the user
+  // set on the dashboard (min/max weights, locks) so the PDF matches the UI.
+  const globalMin = parseFloat(document.getElementById('minWeight')?.value || '0')/100;
+  const globalMax = parseFloat(document.getElementById('maxWeight')?.value || '100')/100;
+  const minW = state.assets.map(a=>a.locked?a.lockWeight:globalMin);
+  const maxW = state.assets.map(a=>a.locked?a.lockWeight:globalMax);
   let wMax, wMin;
-  try { wMax = maxSharpeUnconstrained(cov, muSafe, rf); } catch(e) { wMax = new Array(mu.length).fill(1/mu.length); }
-  try { wMin = minVarianceUnconstrained(cov); } catch(e) { wMin = new Array(mu.length).fill(1/mu.length); }
+  try { wMax = optimizeConstrained(cov, muSafe, rf, minW, maxW, 'maxSharpe', null, getLambda()); } catch(e) { wMax = new Array(muSafe.length).fill(1/muSafe.length); }
+  try { wMin = optimizeConstrained(cov, muSafe, rf, minW, maxW, 'minVar', null, getLambda()); } catch(e) { wMin = new Array(muSafe.length).fill(1/muSafe.length); }
   const zeros = new Array(mu.length).fill(0), ones = new Array(mu.length).fill(1);
   const prevW = state.weights ? [...state.weights] : null;
   const prevMethod = state.method;
