@@ -17,7 +17,13 @@ function chk(name, cond, extra='') {
 }
 
 const vc = new VirtualConsole();
-vc.on('jsdomError', e => jsErrors.push(e.message));
+vc.on('jsdomError', e => {
+  const m = e && e.message ? e.message : String(e);
+  // Ignore jsdom environment limitations that are NOT app bugs:
+  if (/Not implemented:\s*Window's?\s*open\(\)/.test(m)) return; // new-tab preview uses window.open (browser-only)
+  if (/Not implemented: navigation/.test(m)) return;
+  jsErrors.push(m);
+});
 vc.on('error', (...a) => jsErrors.push('console.error: ' + a.join(' ')));
 
 // Inline optimizer.js directly into the HTML so no network fetch is needed
@@ -238,10 +244,43 @@ chk('Print button displayed', printBtn.style.display === 'inline-block', `displa
 const pdfHtml = pv.getAttribute('srcdoc') || '';
 chk('srcdoc non-empty', pdfHtml.length > 3000, `${pdfHtml.length} chars`);
 chk('PDF has client name', pdfHtml.includes('Mr. Chan Tai Man'));
-chk('PDF has One-off Fee line', /One-off Fee/.test(pdfHtml));
-chk('PDF has Net Invested', /Net Invested/.test(pdfHtml));
-chk('PDF has Fee Drag', /Fee Drag/.test(pdfHtml));
 chk('PDF Client Profile has fee row', /deducted upfront/.test(pdfHtml));
+// --- auto-scan + fix: each portfolio's asset weights must sum to exactly 100% ---
+(() => {
+  const pdoc = doc.implementation.createHTMLDocument('p');
+  pdoc.documentElement.innerHTML = pdfHtml;
+  const cards = pdoc.querySelectorAll('.two-col .col');
+  const sums = [...cards].map(c => {
+    const pcts = [...c.querySelectorAll('.alloc-bar .pct')].map(b => parseFloat(b.textContent));
+    return Math.round(pcts.reduce((a,b)=>a+b,0)*10)/10;
+  });
+  chk('PDF each target portfolio weight sums to 100%', sums.length>0 && sums.every(s => Math.abs(s-100) < 0.5), JSON.stringify(sums));
+})();
+chk('PDF Return&Income has Fee column', /<th>Fee<\/th>/.test(pdfHtml));
+chk('PDF Return&Income has Net Inv. column', /Net Inv\./.test(pdfHtml));
+// --- Kathy 2026-08-04 removals ---
+chk('PDF has NO Left:/Right: prefix', !/Left:|Right:|左：|右：/.test(pdfHtml));
+chk('PDF KPI card has NO One-off Fee row', !/One-off Fee<\/div>|一次性費用<\/div>/.test(pdfHtml));
+chk('PDF KPI card has NO Net Invested box', !/>Net Invested</.test(pdfHtml));
+chk('PDF has NO Fee Drag anywhere', !/Fee Drag|費用年化拖累/.test(pdfHtml));
+chk('PDF risk table has NO 95% VaR', !/95% VaR/.test(pdfHtml));
+chk('PDF risk table has NO 99% VaR', !/99% VaR/.test(pdfHtml));            // removed per latest request
+chk('PDF risk table HAS One-off Fee row', /One-off Fee \(deducted upfront\)|一次性費用（開倉扣除）/.test(pdfHtml));
+// Client Profile section is the FIRST <div class=section>... parse it out and assert no fee row
+(() => {
+  const sec = pdfHtml.split('class="section"')[1] || pdfHtml.split('1. Client Profile')[1] || '';
+  const end = sec.indexOf('2. Target') >= 0 ? sec.indexOf('2. Target') : sec.indexOf('2. 目標');
+  const cp = end >= 0 ? sec.slice(0, end) : sec;
+  chk('PDF Client Profile has NO fee row', !/deducted upfront|一次性費用（開倉扣除）/.test(cp));
+})();
+chk('PDF KPI boxes = 6 per card', (pdfHtml.match(/class="kpi-box"/g)||[]).length === 12, String((pdfHtml.match(/class="kpi-box"/g)||[]).length));
+// --- auto-scaled unit (50M -> $M) ---
+chk('PDF uses M-scaled money ($X.XM)', /\$[0-9,]*\.[0-9]+M/.test(pdfHtml));
+chk('PDF amount header shows unit suffix', /Amount \([^)]*M\)|金額 \([^)]*M\)/.test(pdfHtml));
+// --- nowrap on figures ---
+chk('PDF td has white-space nowrap', /td \{[^}]*white-space:\s*nowrap/.test(pdfHtml));
+chk('PDF Return&Income uses ri-table', /class="ri-table"/.test(pdfHtml));
+chk('PDF ri-table has colgroup', /<colgroup>/.test(pdfHtml));
 chk('PDF has Max-Sharpe column', /Max-Sharpe/.test(pdfHtml));
 chk('PDF has Min-Risk column', /Minimum-Risk/.test(pdfHtml));
 chk('PDF has HSBC green #007A3D', pdfHtml.includes('#007A3D'));
