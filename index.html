@@ -876,14 +876,25 @@ function generatePdf() {
   closePdfModal();
   const cur = curSym();
   const amount = getAmount(), tenor = getTenor();
-  const mu = state.assets.map(a=>a.er/100), cov = buildCovMatrix(state.assets.map(a=>a.sd/100), state.corr);
+  try {
+  const mu = state.assets.map(a=>a.er/100);
   const rf = getRf();
   const fmt = (n,d=2) => n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
   const isZH = LANG === 'zh';
 
-  // The two fixed target portfolios
-  const wMax = maxSharpeUnconstrained(cov, mu, rf);
-  const wMin = minVarianceUnconstrained(cov);
+  // Sanitize covariance (add tiny diagonal jitter) so Σ stays invertible even
+  // if a user enters a degenerate input (e.g. an asset with σ=0, or perfectly
+  // correlated assets). Mirrors optimizer.js optimizeConstrained().
+  const muSafe = mu.map(m => (isFinite(m) ? m : 0));
+  const cov = (() => {
+    const raw = buildCovMatrix(state.assets.map(a=>a.sd/100), state.corr);
+    return raw.map((row,i) => row.map((v,j) => (isFinite(v)?v:0) + (i===j ? 1e-8 : 0)));
+  })();
+
+  // The two fixed target portfolios (with safe fallbacks)
+  let wMax, wMin;
+  try { wMax = maxSharpeUnconstrained(cov, muSafe, rf); } catch(e) { wMax = new Array(mu.length).fill(1/mu.length); }
+  try { wMin = minVarianceUnconstrained(cov); } catch(e) { wMin = new Array(mu.length).fill(1/mu.length); }
   const zeros = new Array(mu.length).fill(0), ones = new Array(mu.length).fill(1);
   const prevW = state.weights ? [...state.weights] : null;
   const prevMethod = state.method;
@@ -983,13 +994,13 @@ function generatePdf() {
   `;
   const w = document.getElementById('pdfPreview');
   const printBtn = document.getElementById('pdfPrintBtn');
-  try {
-    w.srcdoc = html + '</body></html>';
-    w.style.display = 'block';
-    printBtn.style.display = 'inline-block';
-    showMsg(isZH?'預覽已生成，撳「Print / Save PDF」存檔':'Preview ready — click Print / Save PDF');
+  w.srcdoc = html + '</body></html>';
+  w.style.display = 'block';
+  printBtn.style.display = 'inline-block';
+  showMsg(isZH?'預覽已生成，撳「Print / Save PDF」存檔':'Preview ready — click Print / Save PDF');
   } catch(e) {
-    showMsg(isZH?'PDF 生成失敗':'PDF generation failed');
+    console.error('generatePdf error:', e);
+    showMsg((isZH?'PDF 生成失敗：':'PDF generation failed: ') + (e && e.message ? e.message : e));
   }
 }
 
